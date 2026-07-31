@@ -1,0 +1,19 @@
+{
+  "name": "projectmatch-frontend",
+  "private": true,
+  "workspaces": [
+    "student-frontend",
+    "faculty-frontend",
+    "admin-frontend",
+    "shared",
+    "e2e"
+  ],
+  "version": "1.0.0",
+  "description": "ProjectMatch Frontend Workspaces",
+  "scripts": {
+    "dev:student": "npm run dev -w student-frontend",
+    "dev:faculty": "npm run dev -w faculty-frontend",
+    "dev:admin": "npm run dev -w admin-frontend"
+  },
+  "license": "ISC"
+}
