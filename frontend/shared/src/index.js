@@ -1,3 +1,6 @@
+import dbuuLogo from './assets/dbuu_logo.jpeg';
+import dbuuFullLogo from './assets/dbuu-logo-png.jpeg';
+
 export const API_BASE_URL = 'http://localhost:5000/api';
 
 export const ROLES = {
@@ -26,5 +29,6 @@ export const TEAM_STATUSES = {
   UNASSIGNED_POOL: 'unassigned_pool',
 };
 
-export { request, authApi } from './api/client.js';
+export { dbuuLogo, dbuuFullLogo };
+export { request, authApi, getApiBaseUrl } from './api/client.js';
 export { AuthProvider, useAuth } from './context/AuthContext.jsx';

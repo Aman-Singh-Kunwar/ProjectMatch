@@ -4,7 +4,7 @@ const User = require('../models/User');
 const generateToken = (user) => {
   const secret = process.env.JWT_SECRET || 'projectmatch_super_secret_jwt_key_2026';
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
+    { id: user._id, email: user.email, role: user.role, school: user.school },
     secret,
     { expiresIn: '7d' }
   );
@@ -13,7 +13,7 @@ const generateToken = (user) => {
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, school } = req.body;
 
     if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'Please provide name, email, password, and role.' });
@@ -34,6 +34,7 @@ const register = async (req, res) => {
       email: email.toLowerCase(),
       passwordHash,
       role,
+      school: school || 'SOEC',
     });
 
     const token = generateToken(newUser);
@@ -45,6 +46,7 @@ const register = async (req, res) => {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
+        school: newUser.school,
         skills: newUser.skills,
         interests: newUser.interests,
       },
@@ -83,6 +85,7 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        school: user.school,
         skills: user.skills,
         interests: user.interests,
       },
@@ -102,6 +105,7 @@ const getMe = async (req, res) => {
         name: req.user.name,
         email: req.user.email,
         role: req.user.role,
+        school: req.user.school,
         skills: req.user.skills,
         interests: req.user.interests,
       },

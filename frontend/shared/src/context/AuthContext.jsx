@@ -5,7 +5,19 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children, allowedRole }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('projectmatch_token'));
+  const [token, setToken] = useState(() => {
+    // Check if token was passed via URL parameter from direct login (e.g. ?token=xyz)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+    if (urlToken) {
+      localStorage.setItem('projectmatch_token', urlToken);
+      // Clean up token from URL bar for clean UX
+      const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+      return urlToken;
+    }
+    return localStorage.getItem('projectmatch_token');
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -32,7 +44,7 @@ export const AuthProvider = ({ children, allowedRole }) => {
       const res = await authApi.login({ email, password });
       
       if (allowedRole && res.user.role !== allowedRole) {
-        throw new Error(`This portal is for ${allowedRole}s only.`);
+        throw new Error(`This portal is restricted to ${allowedRole} accounts only.`);
       }
 
       localStorage.setItem('projectmatch_token', res.token);
@@ -51,7 +63,7 @@ export const AuthProvider = ({ children, allowedRole }) => {
       const res = await authApi.register({ name, email, password, role });
       
       if (allowedRole && res.user.role !== allowedRole) {
-        throw new Error(`This portal is for ${allowedRole}s only.`);
+        throw new Error(`This portal is restricted to ${allowedRole} accounts only.`);
       }
 
       localStorage.setItem('projectmatch_token', res.token);

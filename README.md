@@ -1,6 +1,6 @@
-# ProjectMatch — Build Specification
+# ProjectMatch — Build Specification & Architecture
 
-This document is a complete, unambiguous specification for building ProjectMatch. It is written to be handed to a coding agent (or followed manually) with no further clarification needed on scope or flow. If you're using an agentic IDE/tool, feed this file to it as the primary context document before generating code.
+This document is the complete, updated technical specification for **ProjectMatch**.
 
 ---
 
@@ -12,7 +12,7 @@ A platform for a university department's final-year project cycle, replacing man
 - Admin approves teams and assigns leftover unmatched students.
 - Once approved, each team gets a private workspace with their mentor.
 
-AI is used only for one thing: ranking pool ideas by semantic similarity to a student's stated skills/interests (recommendation), via text-embedding + cosine similarity. It is not used for anything else in v1.
+AI is used for ranking pool ideas by semantic similarity to a student's stated skills/interests (recommendation), via text-embedding + cosine similarity (`text-embedding-004`).
 
 ---
 
@@ -20,6 +20,7 @@ AI is used only for one thing: ranking pool ideas by semantic similarity to a st
 
 | Role | Can do |
 |---|---|
+| **Public / Guest** | View Landing Page showcase, system status, and execute direct Single Sign-On (SSO) login into any portal. |
 | **Student** | Register/login. View idea pool with AI-ranked recommendations. Select a pool idea, OR propose own idea + request a specific faculty as mentor. Create/join a team (add teammates by name/email). Submit team for admin approval. Once approved: access team workspace (discussion, files, milestones, meetings). |
 | **Faculty** | Register/login. Submit/edit/delete project ideas into the pool. View and accept/reject incoming mentor requests for self-proposed ideas. Once mentoring a team: full access to that team's workspace, can set milestones and meeting times. |
 | **Admin** | View all ideas, all teams, all statuses. Approve or reject submitted teams. View unmatched students after the formation window closes and manually assign them to a team + idea + mentor. Open/close the team-formation window. |
@@ -68,7 +69,7 @@ unassigned_pool      — student never joined/submitted a team by window close; 
   role: { type: String, enum: ["student", "faculty", "admin"] },
   skills: [String],
   interests: [String],
-  profileEmbedding: [Number],   // generated once when skills/interests are saved
+  profileVector: [Number],       // alias: profileEmbedding (generated when profile saved)
   createdAt: Date
 }
 
@@ -88,7 +89,7 @@ unassigned_pool      — student never joined/submitted a team by window close; 
     enum: ["not_applicable", "pending_mentor_review", "mentor_accepted", "mentor_rejected"],
     default: "not_applicable"
   },
-  descriptionEmbedding: [Number],
+  descriptionVector: [Number],   // alias: descriptionEmbedding
   createdAt: Date
 }
 
@@ -122,7 +123,7 @@ unassigned_pool      — student never joined/submitted a team by window close; 
   team: ObjectId,
   uploadedBy: ObjectId,
   filename: String,
-  url: String,               // storage URL (see section 7 on file storage)
+  url: String,
   createdAt: Date
 }
 
@@ -154,14 +155,15 @@ unassigned_pool      — student never joined/submitted a team by window close; 
 Auth
 POST   /api/auth/register              { name, email, password, role }
 POST   /api/auth/login                 { email, password } → { token }
+GET    /api/auth/me                    { token } → user object
 
 Ideas / Projects
 POST   /api/projects                   faculty only — creates pool idea, triggers embedding
 POST   /api/projects/propose           student only — creates student_proposed idea, status=pending_mentor_review
 GET    /api/projects                   list (filterable by source/status)
-GET    /api/projects/recommended       student only — ranked pool ideas by cosine similarity to profileEmbedding
+GET    /api/projects/recommended       student only — ranked pool ideas by cosine similarity
 PATCH  /api/projects/:id/mentor-decision   faculty only — { decision: "accept" | "reject" }
-PUT    /api/projects/:id               faculty only, own project — edit (re-embeds on description change)
+PUT    /api/projects/:id               faculty only, own project — edit
 DELETE /api/projects/:id               faculty only, own project
 
 Profile
@@ -170,7 +172,7 @@ PUT    /api/users/me/profile           student — { skills, interests }, trigge
 Teams
 POST   /api/teams                      student — create team around a chosen project
 POST   /api/teams/:id/members          student — add teammate by email
-POST   /api/teams/:id/submit           student — moves team to pending_admin_approval (validates mentor state server-side)
+POST   /api/teams/:id/submit           student — moves team to pending_admin_approval
 GET    /api/teams/:id
 GET    /api/teams/mine                 student — current user's team
 
@@ -196,13 +198,11 @@ POST   /api/teams/:id/meetings          mentor only
 
 ---
 
-## 6. Matching logic (implement exactly this way)
+## 6. Matching logic
 
-Do NOT call the embeddings API at query time. Embeddings are generated once and cached.
-
-1. On `PUT /api/users/me/profile`, concatenate `skills.join(", ") + ". " + interests.join(", ")` into one string, send to the embeddings API, store result in `profileEmbedding`.
-2. On `POST /api/projects` (and on edit if `description` changes), embed `title + ". " + description`, store in `descriptionEmbedding`.
-3. On `GET /api/projects/recommended`, fetch the student's `profileEmbedding` and all `active` pool projects. Compute cosine similarity in plain JS (no external call):
+1. On `PUT /api/users/me/profile`, concatenate `skills.join(", ") + ". " + interests.join(", ")`, request vector embeddings from Gemini API (`text-embedding-004`), store result in `profileVector`.
+2. On `POST /api/projects` (and edit if description changes), embed `title + ". " + description`, store in `descriptionVector`.
+3. On `GET /api/projects/recommended`, fetch student's `profileVector` and active pool projects. Compute cosine similarity in plain JS:
 
 ```js
 function cosineSimilarity(a, b) {
@@ -215,9 +215,7 @@ function cosineSimilarity(a, b) {
   return dot / (Math.sqrt(magA) * Math.sqrt(magB));
 }
 ```
-Sort descending, return top N (e.g. 10).
-
-4. **Fallback**: if the embeddings API call fails at write time, store `profileEmbedding: null` / `descriptionEmbedding: null` and fall back to plain keyword overlap between `interests`/`domainTags` for that record until it's retried. Do not let a failed embedding call block profile save or project creation.
+Sort descending, return top N.
 
 ---
 
@@ -225,37 +223,43 @@ Sort descending, return top N (e.g. 10).
 
 | Layer | Choice |
 |---|---|
-| Frontend | React (Vite) + Tailwind CSS |
-| Data fetching | React Query |
-| Backend | Node.js + Express |
-| Database | MongoDB Atlas + Mongoose |
-| Auth | JWT (jsonwebtoken) + bcrypt |
-| Testing | Jest for `backend/` (unit/integration — auth middleware, matching logic). Playwright for `frontend/e2e/` (cross-portal flows, e.g. faculty accepts a mentor request and it reflects on the student side). |
-| Embeddings | OpenAI `text-embedding-3-small` or Gemini `text-embedding-004` |
-| File storage | For v1, store files via a simple upload to a service like Cloudinary or S3-compatible storage; store only the returned URL in `WorkspaceFile.url`. Do not build custom file storage. |
-| Deployment | Three separate Vercel projects (one per app), each with root directory `frontend/student-frontend`, `frontend/faculty-frontend`, or `frontend/admin-frontend`. Backend → Render, root directory `backend/` (single instance, serves all three). DB → MongoDB Atlas. |
+| **Frontend** | React (Vite) + Vanilla CSS / Glassmorphic UI |
+| **Backend** | Node.js + Express 5 (`index.js` entry point) |
+| **Database** | MongoDB Atlas + Mongoose |
+| **Auth** | JWT (`jsonwebtoken`) + `bcryptjs` + SSO URL Token Handoff |
+| **AI Layer** | Gemini API (`text-embedding-004`) |
+| **Monorepo** | npm Workspaces (`landing-frontend`, `student-frontend`, `faculty-frontend`, `admin-frontend`, `shared`, `e2e`) |
 
 ---
 
-## 8. Environment variables (`backend/.env`)
+## 8. Environment variables
 
-```
+### Backend (`backend/.env`)
+```env
 PORT=5000
-MONGO_URI=
-JWT_SECRET=
-EMBEDDINGS_API_KEY=
-EMBEDDINGS_PROVIDER=openai        # or "gemini"
-FILE_STORAGE_URL=                 # e.g. Cloudinary URL, if used
-CLIENT_URLS=http://localhost:5173,http://localhost:5174,http://localhost:5175   # dev; replace with the three prod domains after deploying
+MONGO_URI=mongodb+srv://.../projectmatch?retryWrites=true&w=majority
+JWT_SECRET=projectmatch_super_secret_jwt_key_2026
+GEMINI_API_KEY=AQ...
+AI_PROVIDER=gemini
+GEMINI_MODEL=text-embedding-004
+
+LANDING_CLIENT_URL=http://localhost:5172
+STUDENT_CLIENT_URL=http://localhost:5173
+FACULTY_CLIENT_URL=http://localhost:5174
+ADMIN_CLIENT_URL=http://localhost:5175
 ```
 
-`backend/src/middleware/cors.js` reads `CLIENT_URLS`, splits on comma, and passes the resulting array to the `cors` package's `origin` allowlist — a single `CLIENT_URL` string is no longer enough now that three distinct frontend origins need access.
+### Frontend Portals (`.env` in each workspace)
+```env
+VITE_API_BASE_URL=http://localhost:5000/api
+VITE_STUDENT_PORTAL_URL=http://localhost:5173
+VITE_FACULTY_PORTAL_URL=http://localhost:5174
+VITE_ADMIN_PORTAL_URL=http://localhost:5175
+```
 
 ---
 
 ## 9. Folder structure
-
-Following the same pattern as your Omni repo: two top-level folders, `backend/` and `frontend/`. `backend/` is a standalone Node package. `frontend/` is itself an npm-workspaces root containing the three role-based apps plus a shared package and e2e tests — same shape as `admin-frontend` / `broker-frontend` / `customer-frontend` / `worker-frontend` / `shared` / `e2e` in your reference project.
 
 ```
 projectmatch/
@@ -263,99 +267,51 @@ projectmatch/
 │  ├─ node_modules/
 │  ├─ src/
 │  │  ├─ models/          # User.js, Project.js, Team.js, WorkspaceMessage.js, WorkspaceFile.js, Milestone.js, Meeting.js
-│  │  ├─ routes/           # one file per resource, matching section 5
-│  │  ├─ controllers/
-│  │  ├─ services/
-│  │  │  ├─ embeddingService.js   # wraps the embeddings API call + fallback
-│  │  │  └─ matchingService.js    # cosineSimilarity + ranking
-│  │  ├─ middleware/
-│  │  │  ├─ auth.js               # verifies JWT, attaches req.user
-│  │  │  ├─ requireRole.js        # requireRole("faculty") etc. — blocks a student token from ever calling faculty/admin routes server-side, not just hiding UI
-│  │  │  └─ cors.js               # allowlist of the three frontend origins, see section 8
-│  │  └─ server.js
-│  ├─ scripts/             # one-off scripts — seed data, backfill embeddings, create admin user
-│  ├─ scratch/              # local debug/throwaway files, gitignored
+│  │  ├─ routes/          # authRoutes.js, projectRoutes.js, etc.
+│  │  ├─ controllers/     # authController.js, etc.
+│  │  ├─ services/        # vectorService.js, matchingService.js
+│  │  ├─ middleware/      # auth.js, requireRole.js, cors.js
+│  │  └─ server.js        # Express application & status dashboard at GET /
+│  ├─ index.js            # Main server entry point (nodemon index.js)
 │  ├─ .env
-│  ├─ jest.config.js        # backend unit/integration tests (matching logic, auth middleware — see section 10 risk note)
 │  ├─ package.json
 │  └─ package-lock.json
 ├─ frontend/
-│  ├─ node_modules/
-│  ├─ student-frontend/     # Vite React app — localhost:5173
-│  │  ├─ src/
-│  │  │  ├─ pages/ (IdeaPool, ProposeIdea, TeamBuilder, Workspace)
-│  │  │  └─ main.jsx
-│  │  ├─ vite.config.js     # server.port = 5173
-│  │  └─ package.json
-│  ├─ faculty-frontend/     # Vite React app — localhost:5174
-│  │  ├─ src/
-│  │  │  ├─ pages/ (MyIdeas, MentorRequests, Workspace)
-│  │  │  └─ main.jsx
-│  │  ├─ vite.config.js     # server.port = 5174
-│  │  └─ package.json
-│  ├─ admin-frontend/       # Vite React app — localhost:5175
-│  │  ├─ src/
-│  │  │  ├─ pages/ (Dashboard, TeamApprovals, UnassignedStudents, WindowControl)
-│  │  │  └─ main.jsx
-│  │  ├─ vite.config.js     # server.port = 5175
-│  │  └─ package.json
-│  ├─ shared/                # "@projectmatch/shared" — imported by all three *-frontend apps
-│  │  ├─ src/
-│  │  │  ├─ api/              # one fetch/axios wrapper per resource, matching section 5 routes
-│  │  │  ├─ context/AuthContext.jsx
-│  │  │  ├─ components/       # generic UI primitives reused across portals (Button, Card, Badge, etc.)
-│  │  │  └─ constants.js      # API_BASE_URL, shared status enums from section 3
-│  │  └─ package.json
-│  ├─ e2e/                    # Playwright tests that cross portals — e.g. faculty accepts mentor request → student sees it update
-│  ├─ test-results/            # gitignored, playwright output
-│  ├─ package.json             # workspace root — workspaces: [student-frontend, faculty-frontend, admin-frontend, shared, e2e]
-│  ├─ package-lock.json
-│  └─ playwright.config.js
+│  ├─ node_modules/       # Shared workspace node_modules
+│  ├─ landing-frontend/   # Showcase & SSO Gateway — http://localhost:5172
+│  ├─ student-frontend/   # Student SPA — http://localhost:5173
+│  ├─ faculty-frontend/   # Faculty SPA — http://localhost:5174
+│  ├─ admin-frontend/     # Admin SPA — http://localhost:5175
+│  ├─ shared/             # "@projectmatch/shared" — AuthContext, API client, UI primitives, constants
+│  ├─ e2e/                # Cross-portal Playwright tests
+│  ├─ package.json        # Workspaces root
+│  └─ package-lock.json   # Unified lockfile
 ├─ .gitignore
-├─ features.md                  # feature spec / role matrix — keep in sync with section 2-3 of this doc
-├─ QA_TESTING.md                 # manual test checklist per role, per state transition in section 3
-└─ README.md                      # this file
+├─ ProjectMatch_Pitch.pdf
+└─ README.md
 ```
-
-**`frontend/package.json` (workspace root):**
-```json
-{
-  "name": "projectmatch-frontend",
-  "private": true,
-  "workspaces": ["student-frontend", "faculty-frontend", "admin-frontend", "shared", "e2e"],
-  "scripts": {
-    "dev:student": "npm run dev -w student-frontend",
-    "dev:faculty": "npm run dev -w faculty-frontend",
-    "dev:admin": "npm run dev -w admin-frontend",
-    "dev": "concurrently \"npm:dev:student\" \"npm:dev:faculty\" \"npm:dev:admin\"",
-    "test:e2e": "playwright test"
-  }
-}
-```
-`backend/` stays a separate package (own `package.json`, own lockfile) run independently — `cd backend && npm run dev` — same as the split in your Omni repo. If you want one command to boot everything, add a thin root `package.json` at `projectmatch/` with a single script: `"dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""`.
-
-**Why three `*-frontend` apps instead of one shared app with route guards:** a single React app with `/student`, `/faculty`, `/admin` routes is faster to scaffold, but every role's code ships to every user's browser (a student's bundle contains admin panel code, just hidden), and a route-guard bug is client-side only — a student could briefly see admin UI before a redirect fires. Separate apps make that class of bug impossible.
 
 ---
 
-## 10. Build order (do not reorder — each step depends on the previous)
+## 10. How to run locally
 
-0. **Scaffold the repo** — `backend/` as a standalone Node package (src/, jest.config.js, package.json), `frontend/` as an npm-workspaces root containing `student-frontend`, `faculty-frontend`, `admin-frontend` (ports per section 9), plus `shared/` and `e2e/`. Confirm `cd backend && npm run dev` and `cd frontend && npm run dev` both boot cleanly (all three Vite apps on their own ports) before writing any feature code.
-1. **Auth + User model** — register/login, JWT middleware, role middleware. Test with Postman before touching frontend.
-2. **Faculty: submit/edit/delete pool ideas** — Project model + CRUD routes + basic React pages.
-3. **Student profile** — skills/interests form, wired to `embeddingService`.
-4. **Recommendations** — `matchingService` + `/api/projects/recommended` + React idea-pool page.
-5. **Self-proposed idea + mentor accept/reject flow** — this is the most stateful part; build and test it in isolation with Postman before wiring the UI.
-6. **Team formation** — create team, add members, submit for approval. Enforce the server-side validation rule from section 3.3 here.
-7. **Admin approval + unassigned-student assignment**.
-8. **Mentor workspace** — messages, files, milestones, meetings, with the access-control check from section 3.3.
-9. **Polish**: loading/error states, empty states, deployment.
+### Backend
+```bash
+cd backend
+npm run dev
+# Starts server on http://localhost:5000
+```
 
----
+### Frontend Portals
+```bash
+cd frontend
 
-## 11. Explicit non-goals for v1
+# Launch individual portals:
+npm run dev:landing   # http://localhost:5172
+npm run dev:student   # http://localhost:5173
+npm run dev:faculty   # http://localhost:5174
+npm run dev:admin     # http://localhost:5175
 
-- No idea-deduplication/similarity-flagging between teams (was in the original pitch, cut for MVP — can be added later by reusing `descriptionEmbedding`, comparing all active projects pairwise, flagging pairs above a similarity threshold like 0.85).
-- No real-time chat (polling via React Query refetch is sufficient for the discussion thread — no WebSocket needed for v1).
-- No file storage built from scratch — use a third-party upload service and store the URL only.
-- No calendar integration for meetings — just a stored date/time + note field.
+# Or launch all 4 portals concurrently:
+npm run dev
+```

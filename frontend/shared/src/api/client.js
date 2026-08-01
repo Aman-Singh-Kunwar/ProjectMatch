@@ -1,7 +1,13 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+export const getApiBaseUrl = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  return 'http://localhost:5000/api';
+};
 
 export const request = async (endpoint, options = {}) => {
   const token = localStorage.getItem('projectmatch_token');
+  const baseUrl = getApiBaseUrl();
 
   const headers = {
     'Content-Type': 'application/json',
@@ -9,7 +15,7 @@ export const request = async (endpoint, options = {}) => {
     ...options.headers,
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
     headers,
   });

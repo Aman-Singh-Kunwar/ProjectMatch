@@ -1,0 +1,452 @@
+/* =========================================================
+   DESIGN TOKENS — DBUU School of Engineering & Computing
+   Matched to DBUU's site: crimson red primary nav,
+   deep navy utility bar/footer, gold emblem accent, grey header background.
+   ========================================================= */
+:root {
+  --paper:        #FFFFFF;  /* page background */
+  --paper-2:      #F1F1F1;  /* alternating light-grey sections / header ground */
+  --paper-line:   rgba(0,0,0,0.10); /* hairlines */
+  --ink:          #1A1A1A;  /* primary text */
+  --ink-soft:     #4A4A4A;  /* secondary text */
+  --ink-mute:     #7A7A7A;  /* tertiary / captions */
+  --pine:         #C41230;  /* primary brand (crimson red) — nav, student role, CTAs */
+  --pine-dark:    #9A0E26;  /* hover state */
+  --slate:        #16214A;  /* secondary brand (navy) — utility bar, footer, faculty role */
+  --slate-dark:   #101836;
+  --clay:         #4A4740;  /* tertiary brand (graphite) — admin role */
+  --clay-dark:    #302E29;
+  --summit:       #D4A017;  /* accent (gold, matches DBUU emblem) — highlights, waypoints */
+  --summit-dark:  #B3860F;
+  --surface:      #FFFFFF;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'Inter', -apple-system, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+  --radius:  4px;
+  --radius-lg: 6px;
+  --container: 1180px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+img, svg { display: block; max-width: 100%; }
+.wrap { max-width: var(--container); margin: 0 auto; padding: 0 32px; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+:focus-visible { outline: 2px solid var(--summit); outline-offset: 3px; }
+
+/* STEP 5: Comprehensive prefers-reduced-motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .topo-path {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+
+  .waypoint {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .feature-card:hover,
+  .school-card:hover,
+  .signpost:hover {
+    transform: none !important;
+  }
+}
+
+/* ============ NAV — three tiers, matching DBUU's structure ============ */
+.nav-utility { background: var(--slate); }
+.nav-utility-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 36px; font-size: 12px; white-space: nowrap; gap: 16px;
+}
+.nav-utility-links { display: flex; gap: 18px; flex-shrink: 0; }
+.nav-utility-links a { color: #C7CEDE; transition: color 0.15s; white-space: nowrap; }
+.nav-utility-links a:hover { color: #FFFFFF; }
+.nav-utility-status { color: #FFFFFF; font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.03em; display: flex; align-items: center; gap: 8px; flex-shrink: 0; white-space: nowrap; }
+.nav-utility-status .dot { width: 7px; height: 7px; border-radius: 50%; background: #4CAF6D; display: inline-block; flex-shrink: 0; }
+@media (max-width: 900px) { .nav-utility-links { display: none; } }
+
+.nav-main { border-bottom: 1px solid var(--paper-line); background: var(--paper-2); }
+.nav-main-inner { display: flex; align-items: center; justify-content: space-between; height: 84px; }
+.nav-brand { display: flex; align-items: center; gap: 14px; }
+.nav-brand-mark {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: var(--summit); color: var(--slate);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 600; font-size: 18px;
+  border: 2px solid var(--pine);
+}
+.nav-brand-text p:first-child {
+  font-family: var(--font-display); font-weight: 600; font-size: 20px; color: var(--pine);
+}
+.nav-brand-text p:last-child {
+  font-size: 12px; color: var(--slate); font-weight: 500; letter-spacing: 0.01em;
+}
+.nav-quick { display: flex; align-items: center; gap: 12px; }
+.nav-quick-box {
+  background: var(--surface); border: 1px solid var(--paper-line); border-radius: var(--radius);
+  padding: 8px 16px; font-size: 13px; color: var(--ink-soft);
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-quick-box strong { color: var(--pine); }
+@media (max-width: 900px) { .nav-quick-box { display: none; } }
+
+/* Tier 3: Crimson Red Nav Bar — Perfect left/right alignment via space-between inside container */
+.nav-links-bar { background: var(--pine); }
+.nav-links-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  overflow-x: auto;
+}
+.nav-links-bar a {
+  color: #FFFFFF;
+  font-size: 14.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0.92;
+  transition: opacity 0.15s;
+}
+.nav-links-bar a:hover {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ============ HERO & STEP 1 TRAIL DRAW-IN ============ */
+.hero { position: relative; overflow: hidden; padding: 72px 0 40px; background: var(--paper-2); }
+.hero-topo { position: absolute; inset: 0; z-index: 0; opacity: 0.5; }
+.hero-inner { position: relative; z-index: 1; }
+.hero-eyebrow { margin-bottom: 22px; }
+.hero-eyebrow strong { color: var(--ink-soft); }
+h1.hero-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(38px, 5.6vw, 62px);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  max-width: 16ch;
+  color: var(--ink);
+}
+h1.hero-title em {
+  font-style: italic; font-weight: 500; color: var(--pine);
+}
+.hero-sub {
+  margin-top: 22px; max-width: 48ch;
+  font-size: 18px; color: var(--ink-soft); line-height: 1.6;
+}
+.hero-actions { margin-top: 32px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.btn-primary {
+  font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.03em;
+  background: var(--pine); color: #FFFFFF;
+  padding: 14px 26px; border-radius: var(--radius);
+  display: inline-flex; align-items: center; gap: 10px;
+  transition: background 0.15s, transform 0.1s;
+  border: none; cursor: pointer; text-decoration: none;
+}
+.btn-primary:hover { background: var(--pine-dark); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-text {
+  font-size: 14px; font-weight: 500; color: var(--ink-soft);
+  border-bottom: 1px solid var(--paper-line);
+  padding-bottom: 2px;
+  transition: border-color 0.15s;
+  text-decoration: none;
+}
+.btn-text:hover { border-color: var(--ink); }
+
+/* STEP 1: Topographic SVG Draw-In & Waypoints Sequence */
+.topo-path {
+  stroke-dasharray: 1400;
+  stroke-dashoffset: 1400;
+  animation: drawTopoPath 1.8s ease-out forwards;
+}
+.topo-path-1 { animation-delay: 0s; }
+.topo-path-2 { animation-delay: 0.2s; }
+.topo-path-3 { animation-delay: 0.4s; }
+
+@keyframes drawTopoPath {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.waypoints { position: relative; margin-top: 56px; padding-top: 36px; border-top: 1px solid var(--paper-line); }
+.waypoint-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+.waypoint {
+  position: relative;
+  padding-left: 22px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: waypointFadeSlide 0.6s ease-out forwards;
+}
+.waypoint:nth-child(1) { animation-delay: 0.9s; }
+.waypoint:nth-child(2) { animation-delay: 1.05s; }
+.waypoint:nth-child(3) { animation-delay: 1.20s; }
+.waypoint:nth-child(4) { animation-delay: 1.35s; }
+
+@keyframes waypointFadeSlide {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.waypoint::before {
+  content: ''; position: absolute; left: 0; top: 4px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--summit-dark);
+}
+.waypoint .wp-num { font-family: var(--font-mono); font-size: 11px; color: var(--pine); letter-spacing: 0.04em; }
+.waypoint .wp-label { margin-top: 4px; font-size: 14.5px; font-weight: 500; color: var(--ink); }
+@media (max-width: 760px) { .waypoint-row { grid-template-columns: 1fr 1fr; row-gap: 28px; } }
+
+/* STEP 3: Scroll-Reveal CSS Pattern */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============ DEMO WIDGET MATCHED STYLING ============ */
+.demo-widget-card {
+  background: var(--surface);
+  border: 1px solid var(--paper-line);
+  border-top: 4px solid var(--pine);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+}
+
+.demo-widget-input {
+  width: 100%;
+  padding: 12px 16px 12px 42px;
+  border-radius: var(--radius);
+  border: 1px solid var(--paper-line);
+  background: var(--paper-2);
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--ink);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.demo-widget-input:focus {
+  outline: none;
+  background-color: #FFFFFF;
+  border-color: var(--pine);
+}
+
+.quick-chip {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 5px 12px;
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  border: 1px solid var(--paper-line);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.quick-chip:hover {
+  background: var(--pine);
+  color: #FFFFFF;
+  border-color: var(--pine);
+}
+
+.matched-tag {
+  background: var(--pine) !important;
+  color: #FFFFFF !important;
+  font-weight: 500 !important;
+}
+
+.demo-project-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--paper-line);
+  border-radius: var(--radius);
+  transition: transform 0.35s ease, opacity 0.35s ease, border-color 0.15s, box-shadow 0.15s;
+}
+.demo-project-item.matched-row {
+  border-color: var(--pine);
+  background: #FFFDFC;
+}
+
+/* ============ STATS — banded like DBUU stat strip ============ */
+.stats { background: var(--slate); }
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); }
+.stat { padding: 34px 32px; border-left: 1px solid rgba(255,255,255,0.14); }
+.stat:first-child { border-left: none; }
+.stat-num { font-family: var(--font-display); font-weight: 600; font-size: 32px; color: var(--summit); }
+.stat-label { margin-top: 6px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.03em; color: #C7CEDE; text-transform: uppercase; }
+@media (max-width: 760px) { .stats-row { grid-template-columns: 1fr 1fr; } .stat:nth-child(3) { border-left: none; } .stat { border-top: 1px solid rgba(255,255,255,0.14); } .stat:nth-child(-n+2) { border-top: none; } }
+
+section { padding: 88px 0; }
+.section-head { max-width: 640px; margin-bottom: 52px; }
+.section-head .eyebrow { margin-bottom: 16px; }
+h2.section-title {
+  font-family: var(--font-display); font-weight: 500;
+  font-size: clamp(28px, 3.2vw, 38px); line-height: 1.15; color: var(--ink);
+}
+.section-sub { margin-top: 14px; font-size: 16.5px; color: var(--ink-soft); max-width: 54ch; }
+
+/* ============ FEATURE HIGHLIGHT CARDS ============ */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--paper-line);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  position: relative;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(196, 18, 48, 0.08);
+  color: var(--pine);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+.feature-card h3 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.feature-card p {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+/* STEP 4: PROJECT SCHOOLS CARD HOVER MICRO-INTERACTION */
+.school-card {
+  background: var(--surface);
+  border: 1px solid var(--paper-line);
+  border-radius: 6px;
+  padding: 24px;
+  border-top: 4px solid var(--pine);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.school-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* ============ STEP 4: PORTAL SIGNPOSTS HOVER MICRO-INTERACTION ============ */
+.signposts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.signpost {
+  background: var(--surface);
+  border: 1px solid var(--paper-line);
+  border-top: 4px solid;
+  padding: 36px 30px;
+  border-radius: var(--radius-lg);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.signpost:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.signpost.student { border-top-color: var(--pine); }
+.signpost.faculty { border-top-color: var(--slate); }
+.signpost.admin { border-top-color: var(--clay); }
+.signpost-role { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; }
+.signpost.student .signpost-role { color: var(--pine); }
+.signpost.faculty .signpost-role { color: var(--slate); }
+.signpost.admin .signpost-role { color: var(--clay); }
+.signpost h3 { font-family: var(--font-display); font-size: 22px; font-weight: 500; margin-top: 12px; }
+.signpost p { margin-top: 12px; font-size: 14.5px; color: var(--ink-soft); line-height: 1.6; }
+.signpost-enter {
+  margin-top: 22px; display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13.5px; font-weight: 600; padding-bottom: 2px;
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+  text-decoration: none;
+}
+.signpost.student .signpost-enter { color: var(--pine); }
+.signpost.faculty .signpost-enter { color: var(--slate); }
+.signpost.admin .signpost-enter { color: var(--clay); }
+@media (max-width: 860px) { .signposts { grid-template-columns: 1fr; } }
+
+/* ============ THE ROUTE ============ */
+.route { background: var(--paper-2); }
+.route-list { border-top: 1px solid var(--paper-line); }
+.route-item {
+  display: grid; grid-template-columns: 90px 1fr; gap: 24px;
+  padding: 28px 0; border-bottom: 1px solid var(--paper-line);
+}
+.route-item .route-num { font-family: var(--font-mono); font-size: 13px; color: var(--pine); padding-top: 4px; }
+.route-item h4 { font-family: var(--font-display); font-size: 20px; font-weight: 500; }
+.route-item p { margin-top: 6px; font-size: 15px; color: var(--ink-soft); max-width: 60ch; }
+
+/* ============ FOOTER — red + navy split ============ */
+footer { display: grid; grid-template-columns: 340px 1fr; }
+.footer-brand {
+  background: var(--pine); color: #FFFFFF;
+  padding: 48px 40px;
+}
+.footer-brand-mark {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--summit); color: var(--slate);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 600; font-size: 16px;
+}
+.footer-brand p.name { margin-top: 14px; font-family: var(--font-display); font-size: 19px; font-weight: 600; }
+.footer-brand p.affil { margin-top: 8px; font-size: 13px; color: rgba(255,255,255,0.82); line-height: 1.6; max-width: 34ch; }
+.footer-links-panel { background: var(--slate); color: #FFFFFF; padding: 48px 40px; }
+.footer-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.footer-col p.col-head { font-size: 13px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--summit); margin-bottom: 14px; }
+.footer-col a { display: block; font-size: 14px; color: #C7CEDE; margin-bottom: 10px; transition: color 0.15s; }
+.footer-col a:hover { color: #FFFFFF; }
+.footer-fine { margin-top: 36px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.14); font-family: var(--font-mono); font-size: 11px; color: #8B94AE; }
+@media (max-width: 860px) { footer { grid-template-columns: 1fr; } .footer-cols { grid-template-columns: 1fr 1fr; } }

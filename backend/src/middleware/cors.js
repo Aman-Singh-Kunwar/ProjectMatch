@@ -2,11 +2,12 @@ const cors = require('cors');
 
 // Read separate client URLs for each portal
 const getAllowedOrigins = () => {
+  const landingUrl = process.env.LANDING_CLIENT_URL || 'http://localhost:5172';
   const studentUrl = process.env.STUDENT_CLIENT_URL || 'http://localhost:5173';
   const facultyUrl = process.env.FACULTY_CLIENT_URL || 'http://localhost:5174';
   const adminUrl = process.env.ADMIN_CLIENT_URL || 'http://localhost:5175';
 
-  return [studentUrl, facultyUrl, adminUrl];
+  return [landingUrl, studentUrl, facultyUrl, adminUrl];
 };
 
 const corsMiddleware = cors({

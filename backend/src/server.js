@@ -39,6 +39,7 @@ app.use(express.json());
 // Root Landing Page HTML Dashboard
 app.get('/', (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;
+  const landingUrl = process.env.LANDING_CLIENT_URL || 'http://localhost:5172';
   const studentUrl = process.env.STUDENT_CLIENT_URL || 'http://localhost:5173';
   const facultyUrl = process.env.FACULTY_CLIENT_URL || 'http://localhost:5174';
   const adminUrl = process.env.ADMIN_CLIENT_URL || 'http://localhost:5175';
@@ -64,7 +65,6 @@ app.get('/', (req, res) => {
       --primary-hover: #4f46e5;
       --success: #10b981;
       --danger: #ef4444;
-      --warning: #f59e0b;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -78,112 +78,64 @@ app.get('/', (req, res) => {
       justify-content: center;
       padding: 2rem 1rem;
     }
-    .container {
-      width: 100%;
-      max-width: 850px;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
+    .container { width: 100%; max-width: 900px; }
+    .header { text-align: center; margin-bottom: 2rem; }
     .header h1 {
-      font-size: 2.25rem;
-      font-weight: 700;
+      font-size: 2.25rem; font-weight: 700;
       background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       margin-bottom: 0.5rem;
     }
     .header p { color: var(--text-muted); font-size: 1rem; }
     .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.85rem;
-      border-radius: 9999px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      margin-top: 0.75rem;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.2);
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.875rem;
+      font-weight: 600; margin-top: 0.75rem;
+      background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);
       color: var(--success);
     }
     .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: var(--success);
-      box-shadow: 0 0 8px var(--success);
+      width: 8px; height: 8px; border-radius: 50%;
+      background-color: var(--success); box-shadow: 0 0 8px var(--success);
     }
     .section-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 1rem;
+      font-size: 1.1rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;
     }
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.25rem;
-      margin-bottom: 2rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
     }
     .portal-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 0.75rem;
-      padding: 1.5rem;
-      text-decoration: none;
-      color: var(--text);
-      transition: all 0.2s ease;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      background-color: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 0.75rem; padding: 1.25rem; text-decoration: none;
+      color: var(--text); transition: all 0.2s ease;
+      display: flex; flex-direction: column; justify-content: space-between;
     }
     .portal-card:hover {
-      border-color: var(--primary);
-      transform: translateY(-2px);
+      border-color: var(--primary); transform: translateY(-2px);
       box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
     }
-    .portal-icon { font-size: 2rem; margin-bottom: 0.75rem; }
-    .portal-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.25rem; }
-    .portal-desc { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .portal-card.landing-card { border-color: rgba(99, 102, 241, 0.5); background: linear-gradient(135deg, #1e1b4b 0%, #111827 100%); }
+    .portal-icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .portal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .portal-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
     .portal-url {
-      font-family: monospace;
-      font-size: 0.8rem;
-      color: #818cf8;
-      background: rgba(99, 102, 241, 0.1);
-      padding: 0.35rem 0.6rem;
-      border-radius: 0.375rem;
-      width: fit-content;
+      font-family: monospace; font-size: 0.75rem; color: #818cf8;
+      background: rgba(99, 102, 241, 0.1); padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem; width: fit-content;
     }
     .info-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 0.75rem;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
+      background-color: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 2rem;
     }
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 0.95rem;
-    }
+    .info-row { display: flex; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
     .info-row:last-child { border-bottom: none; }
     .info-label { color: var(--text-muted); }
     .info-value { font-weight: 600; font-family: monospace; }
     .val-online { color: var(--success); }
     .val-offline { color: var(--danger); }
-    .footer {
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-    .footer a { color: #818cf8; text-decoration: none; }
-    .footer a:hover { text-decoration: underline; }
+    .footer { text-align: center; color: var(--text-muted); font-size: 0.85rem; }
   </style>
 </head>
 <body>
@@ -196,13 +148,22 @@ app.get('/', (req, res) => {
       </div>
     </div>
 
-    <div class="section-title">🌐 Launch Client Portals</div>
+    <div class="section-title">🌐 Launch Portals & Showcase</div>
     <div class="grid">
+      <a href="${landingUrl}" target="_blank" class="portal-card landing-card">
+        <div>
+          <div class="portal-icon">✨</div>
+          <div class="portal-title">Landing Showcase</div>
+          <div class="portal-desc">Public Platform Gateway & Feature Overview</div>
+        </div>
+        <div class="portal-url">${landingUrl}</div>
+      </a>
+
       <a href="${studentUrl}" target="_blank" class="portal-card">
         <div>
           <div class="portal-icon">🎓</div>
           <div class="portal-title">Student Portal</div>
-          <div class="portal-desc">AI Recommendations, Idea Pool, Team Builder & Workspace</div>
+          <div class="portal-desc">AI Recommendations & Team Builder</div>
         </div>
         <div class="portal-url">${studentUrl}</div>
       </a>
@@ -211,7 +172,7 @@ app.get('/', (req, res) => {
         <div>
           <div class="portal-icon">👨‍🏫</div>
           <div class="portal-title">Faculty Portal</div>
-          <div class="portal-desc">Manage Pool Ideas, Mentor Requests & Team Guidance</div>
+          <div class="portal-desc">Pool Ideas & Mentor Requests</div>
         </div>
         <div class="portal-url">${facultyUrl}</div>
       </a>
@@ -220,7 +181,7 @@ app.get('/', (req, res) => {
         <div>
           <div class="portal-icon">🛡️</div>
           <div class="portal-title">Admin Portal</div>
-          <div class="portal-desc">Team Approvals, Unassigned Matching & Formation Window</div>
+          <div class="portal-desc">Approvals & Window Control</div>
         </div>
         <div class="portal-url">${adminUrl}</div>
       </a>
@@ -271,6 +232,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     dbState: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     clientUrls: {
+      landing: process.env.LANDING_CLIENT_URL || 'http://localhost:5172',
       student: process.env.STUDENT_CLIENT_URL || 'http://localhost:5173',
       faculty: process.env.FACULTY_CLIENT_URL || 'http://localhost:5174',
       admin: process.env.ADMIN_CLIENT_URL || 'http://localhost:5175',

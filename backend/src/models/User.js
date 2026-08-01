@@ -24,6 +24,11 @@ const userSchema = new mongoose.Schema(
       enum: ['student', 'faculty', 'admin'],
       required: [true, 'Role is required'],
     },
+    school: {
+      type: String,
+      enum: ['SOEC', 'SOMC', 'SOPR', 'SOADP', 'SOAF', 'SOBAS'],
+      default: 'SOEC',
+    },
     skills: {
       type: [String],
       default: [],
