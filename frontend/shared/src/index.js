@@ -1,5 +1,6 @@
 import dbuuLogo from './assets/dbuu_logo.jpeg';
 import dbuuFullLogo from './assets/dbuu-logo-png.jpeg';
+import dbuuLogoBig from './assets/dbuu-logo-big.jpeg';
 
 export const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -29,6 +30,20 @@ export const TEAM_STATUSES = {
   UNASSIGNED_POOL: 'unassigned_pool',
 };
 
-export { dbuuLogo, dbuuFullLogo };
+export { dbuuLogo, dbuuFullLogo, dbuuLogoBig };
 export { request, authApi, getApiBaseUrl } from './api/client.js';
-export { AuthProvider, useAuth } from './context/AuthContext.jsx';
+
+// Auth API Client
+export { login, register, me, AuthError } from './api/authClient.js';
+
+// Auth Context
+export { AuthProvider, useAuth, SHARED_TOKEN_KEY } from './context/AuthContext.jsx';
+
+// SSO Handoff Utilities
+export { PORTAL_URLS, buildSSOUrl, redirectToPortal, catchSSOToken } from './utils/ssoHandoff.js';
+
+// Reusable Auth Components
+export { default as LoginForm } from './components/auth/LoginForm.jsx';
+export { default as RegisterForm } from './components/auth/RegisterForm.jsx';
+export { default as SplitAuthModal } from './components/auth/SplitAuthModal.jsx';
+export { default as SplitAuthPage } from './components/auth/SplitAuthPage.jsx';

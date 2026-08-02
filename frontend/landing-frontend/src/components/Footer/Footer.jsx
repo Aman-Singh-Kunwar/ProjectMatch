@@ -8,6 +8,7 @@ export default function Footer({ PORTALS }) {
         <img
           src={dbuuFullLogo}
           alt="Dev Bhoomi Uttarakhand University - 21 Years of Academic Excellence"
+          loading="lazy"
           style={{
             height: '48px',
             width: 'auto',
@@ -19,19 +20,19 @@ export default function Footer({ PORTALS }) {
         <p className="name">ProjectMatch</p>
         <p className="affil">
           Minor & Major Capstone Platform for Dev Bhoomi Uttarakhand University (DBUU), Dehradun.<br />
-          Chakrata Road, Navgaon, Manduwala, Dehradun, Uttarakhand 248007.
+          School of Engineering & Computing (SOEC), Manduwala, Dehradun, Uttarakhand 248007.
         </p>
       </div>
       <div className="footer-links-panel">
         <div className="footer-cols">
           <div className="footer-col">
-            <p className="col-head">Project Schools</p>
-            <a href="#schools">School of Engineering (SOEC)</a>
-            <a href="#schools">School of Management (SOMC)</a>
-            <a href="#schools">School of Pharmacy (SOPR)</a>
-            <a href="#schools">School of Architecture (SOADP)</a>
-            <a href="#schools">School of Agriculture (SOAF)</a>
-            <a href="#schools">School of Applied Sciences (SOBAS)</a>
+            <p className="col-head">SOEC Programs</p>
+            <a href="#soec-programs">B.Tech Computer Science (CSE)</a>
+            <a href="#soec-programs">B.Tech AI & Machine Learning</a>
+            <a href="#soec-programs">B.Tech Cyber Security</a>
+            <a href="#soec-programs">Bachelor of Computer Apps (BCA)</a>
+            <a href="#soec-programs">Master of Computer Apps (MCA)</a>
+            <a href="#soec-programs">M.Tech Computer Science</a>
           </div>
           <div className="footer-col">
             <p className="col-head">Portals</p>

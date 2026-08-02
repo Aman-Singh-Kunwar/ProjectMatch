@@ -3,13 +3,13 @@ import { dbuuLogo } from '@projectmatch/shared';
 
 import Header from './components/Header/Header';
 import Hero from './components/Hero/Hero';
-import AiSpecs from './components/Features/AiSpecs';
+import RolePortals from './components/Portals/RolePortals';
 import ProjectSchools from './components/Schools/ProjectSchools';
 import CampusStrip from './components/Campus/CampusStrip';
-import RolePortals from './components/Portals/RolePortals';
-import AuthModal from './components/Portals/AuthModal';
+import AiSpecs from './components/Features/AiSpecs';
 import TheRoute from './components/Route/TheRoute';
 import Footer from './components/Footer/Footer';
+import AuthModal from './components/Portals/AuthModal';
 import PwaStatus from './components/Pwa/PwaStatus';
 
 import { useStatCounter } from './hooks/useStatCounter';
@@ -18,18 +18,13 @@ import { useScrollReveal } from './hooks/useScrollReveal';
 const PORTALS = {
   STUDENT: import.meta.env.VITE_STUDENT_PORTAL_URL || 'http://localhost:5173',
   FACULTY: import.meta.env.VITE_FACULTY_PORTAL_URL || 'http://localhost:5174',
-  ADMIN: import.meta.env.VITE_ADMIN_PORTAL_URL || 'http://localhost:5000/api',
-  API_BASE: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  ADMIN: import.meta.env.VITE_ADMIN_PORTAL_URL || 'http://localhost:5175',
 };
 
 export default function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
-  const [selectedRole, setSelectedRole] = useState('student');
-  const [selectedSchool, setSelectedSchool] = useState('SOEC');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-  const [authError, setAuthError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [authInitialMode, setAuthInitialMode] = useState('login');
+  const [authInitialRole, setAuthInitialRole] = useState('student');
 
   // Initialize custom hooks for IntersectionObserver animations
   useStatCounter();
@@ -46,76 +41,40 @@ export default function App() {
     link.href = dbuuLogo;
   }, []);
 
-  const openAuth = (role, mode = 'login') => {
-    setSelectedRole(role);
-    setAuthMode(mode);
-    setAuthError('');
-    setFormData({ name: '', email: '', password: '' });
+  const openAuth = (role = 'student', mode = 'login') => {
+    setAuthInitialRole(role);
+    setAuthInitialMode(mode);
     setShowLoginModal(true);
-  };
-
-  const handleDirectAuth = async (e) => {
-    e.preventDefault();
-    setAuthError('');
-    setSubmitting(true);
-
-    try {
-      const endpoint = authMode === 'login' ? '/auth/login' : '/auth/register';
-      const payload = authMode === 'login'
-        ? { email: formData.email, password: formData.password }
-        : { name: formData.name, email: formData.email, password: formData.password, role: selectedRole, school: selectedSchool };
-
-      const res = await fetch(`${PORTALS.API_BASE}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
-      }
-
-      if (data.user.role !== selectedRole) {
-        throw new Error(`Your account is registered as '${data.user.role}', not '${selectedRole}'.`);
-      }
-
-      let targetPortalUrl = PORTALS.STUDENT;
-      if (selectedRole === 'faculty') targetPortalUrl = PORTALS.FACULTY;
-      if (selectedRole === 'admin') targetPortalUrl = PORTALS.ADMIN;
-
-      window.location.href = `${targetPortalUrl}?token=${data.token}`;
-    } catch (err) {
-      setAuthError(err.message);
-      setSubmitting(false);
-    }
   };
 
   return (
     <div>
       <Header />
+      {/* 1. Home */}
       <Hero />
-      <AiSpecs />
-      <ProjectSchools />
-      <CampusStrip />
+
+      {/* 2. Role Portals */}
       <RolePortals PORTALS={PORTALS} openAuth={openAuth} />
+
+      {/* 3. SOEC Programs (2nd/3rd/4th Yr) */}
+      <ProjectSchools />
+
+      {/* 4. DBUU Campus */}
+      <CampusStrip />
+
+      {/* 5. AI Matching Specs */}
+      <AiSpecs />
+
+      {/* 6. How it works */}
       <TheRoute />
+
       <Footer PORTALS={PORTALS} />
 
       <AuthModal
         showLoginModal={showLoginModal}
         setShowLoginModal={setShowLoginModal}
-        authMode={authMode}
-        setAuthMode={setAuthMode}
-        selectedRole={selectedRole}
-        selectedSchool={selectedSchool}
-        setSelectedSchool={setSelectedSchool}
-        formData={formData}
-        setFormData={setFormData}
-        authError={authError}
-        submitting={submitting}
-        handleDirectAuth={handleDirectAuth}
+        initialMode={authInitialMode}
+        initialRole={authInitialRole}
       />
 
       {/* PWA Service Worker & Offline Status Monitor */}

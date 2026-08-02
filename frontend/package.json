@@ -18,5 +18,9 @@
     "dev:admin": "npm run dev -w admin-frontend",
     "dev": "concurrently \"npm:dev:landing\" \"npm:dev:student\" \"npm:dev:faculty\" \"npm:dev:admin\""
   },
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  }
 }

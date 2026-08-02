@@ -1,11 +1,11 @@
-const CACHE_NAME = 'projectmatch-dbuu-v1';
+const CACHE_NAME = 'projectmatch-dbuu-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
 ];
 
-// Install Event — Pre-cache static assets
+// Install Event — Pre-cache static assets & skip waiting
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -14,7 +14,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate Event — Clean up old cache versions
+// Activate Event — Clean up old cache versions & claim clients immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -27,9 +27,15 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Message Event — Handle explicit skipWaiting request from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Fetch Event — Stale-while-revalidate with offline fallback
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
   // Handle HTML navigation requests with network-first strategy

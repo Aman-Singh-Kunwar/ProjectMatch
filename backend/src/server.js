@@ -2,8 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const dns = require('dns');
+const fs = require('fs');
+const path = require('path');
 const { corsMiddleware, getAllowedOrigins } = require('./middleware/cors');
 const authRoutes = require('./routes/authRoutes');
+const programRoutes = require('./routes/programRoutes');
+const projectRoutes = require('./routes/projectRoutes');
+const teamRoutes = require('./routes/teamRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 // In local development, override DNS to Google Public DNS (8.8.8.8) if router DNS blocks SRV queries
 if (process.env.NODE_ENV !== 'production') {
@@ -36,7 +42,20 @@ const validateEnv = () => {
 app.use(corsMiddleware);
 app.use(express.json());
 
-// Root Landing Page HTML Dashboard
+// Serve DBUU Logo Asset Endpoint
+app.get('/logo.jpeg', (req, res) => {
+  const primaryPath = path.join(__dirname, '../../frontend/shared/src/assets/dbuu_logo.jpeg');
+  if (fs.existsSync(primaryPath)) {
+    return res.sendFile(primaryPath);
+  }
+  const altPath = path.join(__dirname, '../../frontend/shared/src/assets/dbuu-logo-png.jpeg');
+  if (fs.existsSync(altPath)) {
+    return res.sendFile(altPath);
+  }
+  return res.status(404).send('Logo file not found');
+});
+
+// Root Landing Page HTML Dashboard (DBUU Aesthetic Matched)
 app.get('/', (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1;
   const landingUrl = process.env.LANDING_CLIENT_URL || 'http://localhost:5172';
@@ -50,145 +69,300 @@ app.get('/', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProjectMatch — Backend Server Status</title>
+  <title>ProjectMatch — DBUU API Server Status</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: #111827;
-      --border: #1f2937;
-      --text: #f9fafb;
-      --text-muted: #9ca3af;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --success: #10b981;
-      --danger: #ef4444;
+      --paper:        #FFFFFF;
+      --paper-2:      #F1F1F1;
+      --paper-line:   rgba(0,0,0,0.10);
+      --ink:          #1A1A1A;
+      --ink-soft:     #4A4A4A;
+      --ink-mute:     #7A7A7A;
+      --pine:         #C41230;  /* DBUU Crimson Red */
+      --pine-dark:    #9A0E26;
+      --slate:        #16214A;  /* DBUU Navy */
+      --clay:         #4A4740;  /* DBUU Graphite */
+      --summit:       #D4A017;  /* DBUU Gold Accent */
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body:    'Inter', sans-serif;
+      --font-mono:    'IBM Plex Mono', monospace;
+      --radius:       4px;
+      --radius-lg:    6px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
+      font-family: var(--font-body);
+      background-color: var(--paper-2);
+      color: var(--ink);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+    }
+    /* Utility Bar */
+    .top-utility {
+      background-color: var(--slate);
+      color: #FFFFFF;
+      padding: 8px 0;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      letter-spacing: 0.03em;
+    }
+    .top-utility-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 2rem 1rem;
-    }
-    .container { width: 100%; max-width: 900px; }
-    .header { text-align: center; margin-bottom: 2rem; }
-    .header h1 {
-      font-size: 2.25rem; font-weight: 700;
-      background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
-    }
-    .header p { color: var(--text-muted); font-size: 1rem; }
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.875rem;
-      font-weight: 600; margin-top: 0.75rem;
-      background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2);
-      color: var(--success);
+      justify-content: space-between;
     }
     .status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background-color: var(--success); box-shadow: 0 0 8px var(--success);
+      width: 7px; height: 7px; border-radius: 50%;
+      background-color: ${dbConnected ? '#4CAF6D' : '#E53935'};
+      display: inline-block;
+      box-shadow: 0 0 6px ${dbConnected ? '#4CAF6D' : '#E53935'};
+    }
+    /* Main Header */
+    .main-header {
+      background: var(--paper);
+      border-bottom: 1px solid var(--paper-line);
+      padding: 24px 0;
+    }
+    .main-header-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-logo-img {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid var(--pine);
+      object-fit: cover;
+      background: #ffffff;
+      box-shadow: 0 2px 8px rgba(196, 18, 48, 0.15);
+    }
+    .brand-text h1 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--pine);
+      line-height: 1.1;
+    }
+    .brand-text p {
+      font-size: 12px;
+      color: var(--slate);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+    /* Container */
+    .content-wrap {
+      max-width: 1000px;
+      margin: 36px auto;
+      padding: 0 24px;
+      width: 100%;
+      flex: 1;
+    }
+    .section-head {
+      margin-bottom: 20px;
+    }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--pine);
+      margin-bottom: 4px;
     }
     .section-title {
-      font-size: 1.1rem; font-weight: 600; color: var(--text-muted);
-      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink);
     }
     .grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem; margin-bottom: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 40px;
     }
     .portal-card {
-      background-color: var(--card-bg); border: 1px solid var(--border);
-      border-radius: 0.75rem; padding: 1.25rem; text-decoration: none;
-      color: var(--text); transition: all 0.2s ease;
-      display: flex; flex-direction: column; justify-content: space-between;
+      background: var(--paper);
+      border: 1px solid var(--paper-line);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      text-decoration: none;
+      color: var(--ink);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-top: 4px solid var(--pine);
     }
     .portal-card:hover {
-      border-color: var(--primary); transform: translateY(-2px);
-      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.2);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
     }
-    .portal-card.landing-card { border-color: rgba(99, 102, 241, 0.5); background: linear-gradient(135deg, #1e1b4b 0%, #111827 100%); }
-    .portal-icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
-    .portal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
-    .portal-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+    .portal-card.landing { border-top-color: var(--pine); }
+    .portal-card.student { border-top-color: var(--pine); }
+    .portal-card.faculty { border-top-color: var(--slate); }
+    .portal-card.admin { border-top-color: var(--clay); }
+    
+    .portal-icon { font-size: 2rem; margin-bottom: 10px; }
+    .portal-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .portal-desc {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
     .portal-url {
-      font-family: monospace; font-size: 0.75rem; color: #818cf8;
-      background: rgba(99, 102, 241, 0.1); padding: 0.25rem 0.5rem;
-      border-radius: 0.375rem; width: fit-content;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--pine);
+      background: rgba(196, 18, 48, 0.08);
+      padding: 4px 10px;
+      border-radius: var(--radius);
+      width: fit-content;
+      font-weight: 500;
     }
-    .info-card {
-      background-color: var(--card-bg); border: 1px solid var(--border);
-      border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 2rem;
+    .portal-card.faculty .portal-url { color: var(--slate); background: rgba(22, 33, 74, 0.08); }
+    .portal-card.admin .portal-url { color: var(--clay); background: rgba(74, 71, 64, 0.08); }
+
+    /* Health Info Panel */
+    .info-panel {
+      background: var(--paper);
+      border: 1px solid var(--paper-line);
+      border-top: 4px solid var(--slate);
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
     }
-    .info-row { display: flex; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--paper-line);
+      font-size: 14px;
+    }
     .info-row:last-child { border-bottom: none; }
-    .info-label { color: var(--text-muted); }
-    .info-value { font-weight: 600; font-family: monospace; }
-    .val-online { color: var(--success); }
-    .val-offline { color: var(--danger); }
-    .footer { text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+    .info-label { color: var(--ink-soft); }
+    .info-value {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 500;
+    }
+    .val-online { color: #4CAF6D; font-weight: 600; }
+    .val-offline { color: var(--pine); font-weight: 600; }
+
+    /* Footer */
+    footer {
+      background: var(--slate);
+      color: #FFFFFF;
+      padding: 20px 0;
+      margin-top: 40px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>ProjectMatch API Server</h1>
-      <p>Multi-Role Capstone Lifecycle Platform Backend</p>
-      <div class="status-badge">
-        <span class="status-dot"></span> Server Active on Port ${PORT}
+  <!-- Top Utility Bar -->
+  <div class="top-utility">
+    <div class="top-utility-inner">
+      <span>DEV BHOOMI UTTARAKHAND UNIVERSITY &mdash; API SERVER</span>
+      <span style="display: flex; align-items: center; gap: 8px;">
+        <span class="status-dot"></span>
+        API ACTIVE ON PORT ${PORT}
+      </span>
+    </div>
+  </div>
+
+  <!-- Main Header -->
+  <div class="main-header">
+    <div class="main-header-inner">
+      <div class="brand-group">
+        <img src="/logo.jpeg" alt="Dev Bhoomi Uttarakhand University Logo" class="brand-logo-img" />
+        <div class="brand-text">
+          <h1>ProjectMatch Engine</h1>
+          <p>Backend API & Multi-Portal SSO Router</p>
+        </div>
       </div>
+      <a href="/api/health" target="_blank" style="font-family: var(--font-mono); font-size: 12px; color: var(--pine); background: rgba(196, 18, 48, 0.08); padding: 8px 14px; border-radius: var(--radius); text-decoration: none; font-weight: 500;">
+        GET /api/health &rarr;
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content Wrap -->
+  <div class="content-wrap">
+    <div class="section-head">
+      <p class="eyebrow">Monorepo Gateway</p>
+      <h2 class="section-title">Launch Client Portals & Showcase</h2>
     </div>
 
-    <div class="section-title">🌐 Launch Portals & Showcase</div>
     <div class="grid">
-      <a href="${landingUrl}" target="_blank" class="portal-card landing-card">
+      <a href="${landingUrl}" target="_blank" class="portal-card landing">
         <div>
           <div class="portal-icon">✨</div>
-          <div class="portal-title">Landing Showcase</div>
-          <div class="portal-desc">Public Platform Gateway & Feature Overview</div>
+          <div class="portal-name">Landing Showcase</div>
+          <div class="portal-desc">Public showcase, AI vector match simulator, and SSO entry trailhead.</div>
         </div>
         <div class="portal-url">${landingUrl}</div>
       </a>
 
-      <a href="${studentUrl}" target="_blank" class="portal-card">
+      <a href="${studentUrl}" target="_blank" class="portal-card student">
         <div>
           <div class="portal-icon">🎓</div>
-          <div class="portal-title">Student Portal</div>
-          <div class="portal-desc">AI Recommendations & Team Builder</div>
+          <div class="portal-title portal-name">Student Portal</div>
+          <div class="portal-desc">SOEC Minor & Major project selection, AI recommendations, and team builder.</div>
         </div>
         <div class="portal-url">${studentUrl}</div>
       </a>
 
-      <a href="${facultyUrl}" target="_blank" class="portal-card">
+      <a href="${facultyUrl}" target="_blank" class="portal-card faculty">
         <div>
           <div class="portal-icon">👨‍🏫</div>
-          <div class="portal-title">Faculty Portal</div>
-          <div class="portal-desc">Pool Ideas & Mentor Requests</div>
+          <div class="portal-name">Faculty Portal</div>
+          <div class="portal-desc">Publish pool ideas, review incoming mentor requests, and set milestones.</div>
         </div>
         <div class="portal-url">${facultyUrl}</div>
       </a>
 
-      <a href="${adminUrl}" target="_blank" class="portal-card">
+      <a href="${adminUrl}" target="_blank" class="portal-card admin">
         <div>
           <div class="portal-icon">🛡️</div>
-          <div class="portal-title">Admin Portal</div>
-          <div class="portal-desc">Approvals & Window Control</div>
+          <div class="portal-name">Admin Portal</div>
+          <div class="portal-desc">Department approval, window control, and unassigned student placement.</div>
         </div>
         <div class="portal-url">${adminUrl}</div>
       </a>
     </div>
 
-    <div class="section-title">📊 System Health & Diagnostics</div>
-    <div class="info-card">
+    <div class="section-head">
+      <p class="eyebrow">Database & Services</p>
+      <h2 class="section-title">System Health & Diagnostics</h2>
+    </div>
+
+    <div class="info-panel">
       <div class="info-row">
         <span class="info-label">Database Connection (MongoDB Atlas)</span>
         <span class="info-value ${dbConnected ? 'val-online' : 'val-offline'}">
@@ -206,15 +380,16 @@ app.get('/', (req, res) => {
         </span>
       </div>
       <div class="info-row">
-        <span class="info-label">Health API Endpoint</span>
-        <span class="info-value"><a href="/api/health" target="_blank" style="color: #818cf8;">/api/health</a></span>
+        <span class="info-label">Seeded Programs (SOEC)</span>
+        <span class="info-value">BTECH_CSE, BTECH_AIML, BTECH_ECE, BTECH_CIVIL, BTECH_MECH, BCA</span>
       </div>
     </div>
-
-    <div class="footer">
-      ProjectMatch Backend v1.0.0 &bull; Built with Node.js & Express
-    </div>
   </div>
+
+  <!-- Footer -->
+  <footer>
+    PROJECTMATCH API ENGINE &bull; DEV BHOOMI UTTARAKHAND UNIVERSITY (DBUU)
+  </footer>
 </body>
 </html>
   `;
@@ -224,6 +399,10 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/programs', programRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/teams', teamRoutes);
+app.use('/api/users', userRoutes);
 
 // Health Check Route JSON
 app.get('/api/health', (req, res) => {

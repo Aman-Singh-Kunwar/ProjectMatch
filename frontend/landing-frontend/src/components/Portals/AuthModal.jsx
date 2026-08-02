@@ -1,206 +1,104 @@
-import React from 'react';
-import { dbuuLogo } from '@projectmatch/shared';
-import { DBUU_PROJECT_SCHOOLS } from '../../data/schoolsData';
+import React, { useState } from 'react';
+import { dbuuLogo, LoginForm, RegisterForm, redirectToPortal } from '@projectmatch/shared';
 
-export default function AuthModal({
-  showLoginModal,
-  setShowLoginModal,
-  authMode,
-  setAuthMode,
-  selectedRole,
-  selectedSchool,
-  setSelectedSchool,
-  formData,
-  setFormData,
-  authError,
-  submitting,
-  handleDirectAuth,
-}) {
+export default function AuthModal({ showLoginModal, setShowLoginModal, initialMode = 'login' }) {
+  const [mode, setMode] = useState(initialMode);
+
   if (!showLoginModal) return null;
+
+  const handleSuccess = (user, token) => {
+    // Landing page's only job: authenticate and forward to the correct role portal
+    redirectToPortal(user.role, token);
+  };
 
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.65)',
-        backdropFilter: 'blur(4px)',
+        backgroundColor: 'rgba(16, 22, 42, 0.75)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 100,
-        padding: '1rem',
+        zIndex: 9999,
+        padding: '1.5rem 1rem',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setShowLoginModal(false);
       }}
     >
       <div
         style={{
           width: '100%',
-          maxWidth: '440px',
-          padding: '2rem',
+          maxWidth: '480px',
+          maxHeight: '88vh',
+          overflowY: 'auto',
+          padding: '24px 28px',
           position: 'relative',
           background: 'var(--surface)',
           border: '1px solid var(--paper-line)',
-          borderRadius: '6px',
+          borderTop: '4px solid var(--pine)',
+          borderRadius: '12px',
           color: 'var(--ink)',
+          boxShadow: '0 24px 56px rgba(0,0,0,0.35)',
         }}
       >
+        {/* Close Button */}
         <button
           onClick={() => setShowLoginModal(false)}
+          aria-label="Close Modal"
           style={{
             position: 'absolute',
             top: '1rem',
             right: '1rem',
-            background: 'none',
-            border: 'none',
-            color: 'var(--ink-mute)',
-            fontSize: '1.25rem',
+            background: 'var(--paper-2)',
+            border: '1px solid var(--paper-line)',
+            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
+            color: 'var(--ink-soft)',
+            fontSize: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             cursor: 'pointer',
+            transition: 'all 0.15s ease',
           }}
         >
           ✕
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '0.75rem' }}>
-          <img src={dbuuLogo} alt="DBUU Logo" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: '500' }}>
-            {authMode === 'login' ? 'DBUU Portal Sign-In' : 'Register New Account'}
-          </h3>
+        {/* Modal Top Header Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1.25rem' }}>
+          <img
+            src={dbuuLogo}
+            alt="DBUU Logo"
+            style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--pine)' }}
+          />
+          <div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11.5px', color: 'var(--pine)', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: '600' }}>
+              DBUU SINGLE SIGN-ON
+            </span>
+            <p style={{ fontSize: '11px', color: 'var(--ink-mute)', margin: 0 }}>
+              Multi-Portal Capstone Gateway
+            </p>
+          </div>
         </div>
 
-        <p style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)', fontSize: '0.8rem', marginBottom: '1.25rem', textTransform: 'uppercase' }}>
-          Portal: <strong>{selectedRole}</strong>
-        </p>
-
-        {authError && (
-          <div
-            style={{
-              background: 'rgba(196, 18, 48, 0.1)',
-              border: '1px solid var(--pine)',
-              color: 'var(--pine)',
-              padding: '0.65rem',
-              borderRadius: '3px',
-              fontSize: '0.85rem',
-              marginBottom: '1rem',
-            }}
-          >
-            {authError}
-          </div>
+        {/* Auth Forms (Login / Register) */}
+        {mode === 'login' ? (
+          <LoginForm
+            onSuccess={handleSuccess}
+            onToggleRegister={() => setMode('register')}
+          />
+        ) : (
+          <RegisterForm
+            onSuccess={handleSuccess}
+            onToggleLogin={() => setMode('login')}
+          />
         )}
-
-        <form onSubmit={handleDirectAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {authMode === 'register' && (
-            <>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)', marginBottom: '0.35rem' }}>Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Aman Singh"
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '3px',
-                    background: 'var(--paper-2)',
-                    border: '1px solid var(--paper-line)',
-                    color: 'var(--ink)',
-                    fontSize: '0.9rem',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)', marginBottom: '0.35rem' }}>DBUU Project School</label>
-                <select
-                  value={selectedSchool}
-                  onChange={(e) => setSelectedSchool(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '3px',
-                    background: 'var(--paper-2)',
-                    border: '1px solid var(--paper-line)',
-                    color: 'var(--ink)',
-                    fontSize: '0.9rem',
-                  }}
-                >
-                  {DBUU_PROJECT_SCHOOLS.map((s) => (
-                    <option key={s.code} value={s.code}>{s.name} ({s.code})</option>
-                  ))}
-                </select>
-              </div>
-            </>
-          )}
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)', marginBottom: '0.35rem' }}>Email Address</label>
-            <input
-              type="email"
-              required
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="name@dbuu.ac.in"
-              style={{
-                width: '100%',
-                padding: '0.65rem 0.85rem',
-                borderRadius: '3px',
-                background: 'var(--paper-2)',
-                border: '1px solid var(--paper-line)',
-                color: 'var(--ink)',
-                fontSize: '0.9rem',
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)', marginBottom: '0.35rem' }}>Password</label>
-            <input
-              type="password"
-              required
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="••••••••"
-              style={{
-                width: '100%',
-                padding: '0.65rem 0.85rem',
-                borderRadius: '3px',
-                background: 'var(--paper-2)',
-                border: '1px solid var(--paper-line)',
-                color: 'var(--ink)',
-                fontSize: '0.9rem',
-              }}
-            />
-          </div>
-
-          <button type="submit" disabled={submitting} className="btn-primary" style={{ justifyContent: 'center', marginTop: '0.5rem', width: '100%' }}>
-            {submitting ? 'Authenticating...' : authMode === 'login' ? `Sign In & Open ${selectedRole} Portal` : `Create ${selectedRole} Account`}
-          </button>
-        </form>
-
-        <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
-          {authMode === 'login' ? (
-            <>
-              Need a DBUU account?{' '}
-              <button
-                onClick={() => setAuthMode('register')}
-                style={{ background: 'none', border: 'none', color: 'var(--pine)', cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                Register
-              </button>
-            </>
-          ) : (
-            <>
-              Already have an account?{' '}
-              <button
-                onClick={() => setAuthMode('login')}
-                style={{ background: 'none', border: 'none', color: 'var(--pine)', cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                Sign In
-              </button>
-            </>
-          )}
-        </div>
       </div>
     </div>
   );

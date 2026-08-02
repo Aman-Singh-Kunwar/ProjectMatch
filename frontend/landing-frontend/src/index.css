@@ -1,33 +1,4 @@
-/* =========================================================
-   DESIGN TOKENS — DBUU School of Engineering & Computing
-   Matched to DBUU's site: crimson red primary nav,
-   deep navy utility bar/footer, gold emblem accent, grey header background.
-   ========================================================= */
-:root {
-  --paper:        #FFFFFF;  /* page background */
-  --paper-2:      #F1F1F1;  /* alternating light-grey sections / header ground */
-  --paper-line:   rgba(0,0,0,0.10); /* hairlines */
-  --ink:          #1A1A1A;  /* primary text */
-  --ink-soft:     #4A4A4A;  /* secondary text */
-  --ink-mute:     #7A7A7A;  /* tertiary / captions */
-  --pine:         #C41230;  /* primary brand (crimson red) — nav, student role, CTAs */
-  --pine-dark:    #9A0E26;  /* hover state */
-  --slate:        #16214A;  /* secondary brand (navy) — utility bar, footer, faculty role */
-  --slate-dark:   #101836;
-  --clay:         #4A4740;  /* tertiary brand (graphite) — admin role */
-  --clay-dark:    #302E29;
-  --summit:       #D4A017;  /* accent (gold, matches DBUU emblem) — highlights, waypoints */
-  --summit-dark:  #B3860F;
-  --surface:      #FFFFFF;
-
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body:    'Inter', -apple-system, sans-serif;
-  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
-
-  --radius:  4px;
-  --radius-lg: 6px;
-  --container: 1180px;
-}
+@import '@projectmatch/shared/tokens.css';
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -85,6 +56,7 @@ img, svg { display: block; max-width: 100%; }
 }
 
 /* ============ NAV — three tiers, matching DBUU's structure ============ */
+header.header-top { position: relative; }
 .nav-utility { background: var(--slate); }
 .nav-utility-inner {
   display: flex; align-items: center; justify-content: space-between;
@@ -122,8 +94,14 @@ img, svg { display: block; max-width: 100%; }
 .nav-quick-box strong { color: var(--pine); }
 @media (max-width: 900px) { .nav-quick-box { display: none; } }
 
-/* Tier 3: Crimson Red Nav Bar — Perfect left/right alignment via space-between inside container */
-.nav-links-bar { background: var(--pine); }
+/* Tier 3: Crimson Red Nav Bar — Sticky pinned on top when scrolling (dbuu.ac.in pattern) */
+.nav-links-bar {
+  background: var(--pine);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
 .nav-links-bar-inner {
   display: flex;
   align-items: center;
@@ -389,8 +367,11 @@ h2.section-title {
   background: var(--surface);
   border: 1px solid var(--paper-line);
   border-top: 4px solid;
-  padding: 36px 30px;
+  padding: 32px 28px;
   border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   transition: transform 150ms ease, box-shadow 150ms ease;
 }
 .signpost:hover {
@@ -406,16 +387,53 @@ h2.section-title {
 .signpost.admin .signpost-role { color: var(--clay); }
 .signpost h3 { font-family: var(--font-display); font-size: 22px; font-weight: 500; margin-top: 12px; }
 .signpost p { margin-top: 12px; font-size: 14.5px; color: var(--ink-soft); line-height: 1.6; }
+
+.signpost-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--paper-line);
+}
+
 .signpost-enter {
-  margin-top: 22px; display: inline-flex; align-items: center; gap: 8px;
-  font-size: 13.5px; font-weight: 600; padding-bottom: 2px;
-  border-bottom: 1px solid currentColor;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
+  transition: opacity 0.15s;
+}
+.signpost-enter:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .signpost.student .signpost-enter { color: var(--pine); }
 .signpost.faculty .signpost-enter { color: var(--slate); }
 .signpost.admin .signpost-enter { color: var(--clay); }
+
+.signpost-direct-btn {
+  color: #fff;
+  border: none;
+  padding: 7px 13px;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.signpost-direct-btn:hover { opacity: 0.9; }
+.signpost-direct-btn:active { transform: scale(0.97); }
+.signpost-direct-btn.student { background: var(--pine); }
+.signpost-direct-btn.faculty { background: var(--slate); }
+.signpost-direct-btn.admin { background: var(--clay); }
+
 @media (max-width: 860px) { .signposts { grid-template-columns: 1fr; } }
 
 /* ============ THE ROUTE ============ */

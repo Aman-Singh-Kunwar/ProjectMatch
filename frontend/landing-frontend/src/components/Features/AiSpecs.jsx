@@ -3,7 +3,7 @@ import VectorMatchingDemo from './VectorMatchingDemo';
 
 export default function AiSpecs() {
   return (
-    <section id="features" style={{ background: 'var(--paper)', borderBottom: '1px solid var(--paper-line)' }}>
+    <section id="ai-matching" style={{ background: 'var(--paper)', borderBottom: '1px solid var(--paper-line)' }}>
       <div className="wrap">
         <div className="section-head">
           <p className="eyebrow">ProjectMatch Intelligence & Architecture</p>

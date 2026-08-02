@@ -1,109 +1,101 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authApi } from '../api/client.js';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { login as apiLogin, register as apiRegister, me as apiMe } from '../api/authClient.js';
+
+export const SHARED_TOKEN_KEY = 'projectmatch_token';
 
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children, allowedRole }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => {
-    // Check if token was passed via URL parameter from direct login (e.g. ?token=xyz)
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlToken = urlParams.get('token');
-    if (urlToken) {
-      localStorage.setItem('projectmatch_token', urlToken);
-      // Clean up token from URL bar for clean UX
-      const cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-      window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
-      return urlToken;
-    }
-    return localStorage.getItem('projectmatch_token');
-  });
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Restore session from localStorage token on mount
   useEffect(() => {
-    const initAuth = async () => {
-      if (token) {
-        try {
-          const res = await authApi.getMe();
-          setUser(res.user);
-        } catch (err) {
-          console.error('Auth check failed:', err);
-          logout();
-        }
+    async function restoreSession() {
+      const storedToken = localStorage.getItem(SHARED_TOKEN_KEY);
+      if (!storedToken) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    };
 
-    initAuth();
-  }, [token]);
+      try {
+        const fetchedUser = await apiMe(storedToken);
+        setUser(fetchedUser);
+        setToken(storedToken);
+      } catch (err) {
+        // Token invalid or expired: clear storage & reset state cleanly
+        localStorage.removeItem(SHARED_TOKEN_KEY);
+        setUser(null);
+        setToken(null);
+        setError(err.message || 'Session expired. Please log in again.');
+      } finally {
+        setLoading(false);
+      }
+    }
 
-  const login = async (email, password) => {
+    restoreSession();
+  }, []);
+
+  const login = useCallback(async (email, password) => {
     setError(null);
     try {
-      const res = await authApi.login({ email, password });
-      
-      if (allowedRole && res.user.role !== allowedRole) {
-        throw new Error(`This portal is restricted to ${allowedRole} accounts only.`);
-      }
-
-      localStorage.setItem('projectmatch_token', res.token);
-      setToken(res.token);
-      setUser(res.user);
-      return res.user;
+      const data = await apiLogin({ email, password });
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem(SHARED_TOKEN_KEY, data.token);
+      return data;
     } catch (err) {
       setError(err.message);
       throw err;
     }
-  };
+  }, []);
 
-  const register = async (name, email, password, role) => {
+  const register = useCallback(async (fields) => {
     setError(null);
     try {
-      const res = await authApi.register({ name, email, password, role });
-      
-      if (allowedRole && res.user.role !== allowedRole) {
-        throw new Error(`This portal is restricted to ${allowedRole} accounts only.`);
-      }
-
-      localStorage.setItem('projectmatch_token', res.token);
-      setToken(res.token);
-      setUser(res.user);
-      return res.user;
+      const data = await apiRegister(fields);
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem(SHARED_TOKEN_KEY, data.token);
+      return data;
     } catch (err) {
       setError(err.message);
       throw err;
     }
-  };
+  }, []);
 
-  const logout = () => {
-    localStorage.removeItem('projectmatch_token');
-    setToken(null);
+  const logout = useCallback(() => {
     setUser(null);
+    setToken(null);
+    setError(null);
+    localStorage.removeItem(SHARED_TOKEN_KEY);
+  }, []);
+
+  const value = {
+    user,
+    token,
+    loading,
+    error,
+    login,
+    register,
+    logout,
+    setUser,
+    setToken,
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        error,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!user,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}

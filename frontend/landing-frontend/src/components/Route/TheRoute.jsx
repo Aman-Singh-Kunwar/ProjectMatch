@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function TheRoute() {
   return (
-    <section className="route" id="route">
+    <section className="route" id="how-it-works">
       <div className="wrap">
         <div className="section-head">
           <p className="eyebrow">The route</p>
@@ -11,7 +11,7 @@ export default function TheRoute() {
         <div className="route-list">
           <div className="route-item">
             <p className="route-num">01 / 04</p>
-            <div><h4>Pick a line, or propose your own</h4><p>Select a faculty-listed topic in your DBUU school (2nd, 3rd, or 4th Year), or propose your own custom capstone idea and request a mentor.</p></div>
+            <div><h4>Pick a line, or propose your own</h4><p>Select a faculty-listed topic in your SOEC degree program (2nd, 3rd, or 4th Year), or propose your own custom capstone idea and request a mentor.</p></div>
           </div>
           <div className="route-item">
             <p className="route-num">02 / 04</p>
@@ -19,7 +19,7 @@ export default function TheRoute() {
           </div>
           <div className="route-item">
             <p className="route-num">03 / 04</p>
-            <div><h4>Department approval</h4><p>Your team submission goes to the DBUU school administration for final review. Unassigned students are matched by admin after window close.</p></div>
+            <div><h4>Department approval</h4><p>Your team submission goes to the SOEC department administration for final review. Unassigned students are matched by admin after window close.</p></div>
           </div>
           <div className="route-item">
             <p className="route-num">04 / 04</p>

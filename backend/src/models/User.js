@@ -15,6 +15,12 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    admissionNo: {
+      type: String,
+      uppercase: true,
+      trim: true,
+      default: null,
+    },
     passwordHash: {
       type: String,
       required: [true, 'Password is required'],
@@ -24,10 +30,14 @@ const userSchema = new mongoose.Schema(
       enum: ['student', 'faculty', 'admin'],
       required: [true, 'Role is required'],
     },
-    school: {
-      type: String,
-      enum: ['SOEC', 'SOMC', 'SOPR', 'SOADP', 'SOAF', 'SOBAS'],
-      default: 'SOEC',
+    program: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Program',
+      default: null,
+    },
+    currentYear: {
+      type: Number,
+      default: null,
     },
     skills: {
       type: [String],

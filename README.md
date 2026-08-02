@@ -14,6 +14,15 @@ A platform for a university department's final-year project cycle, replacing man
 
 AI is used for ranking pool ideas by semantic similarity to a student's stated skills/interests (recommendation), via text-embedding + cosine similarity (`text-embedding-004`).
 
+### 1.1 v1 scope (locked)
+
+**In scope:** School of Engineering & Computing (SOEC) at DBUU, undergraduate programs only: B.Tech CSE, B.Tech AI/ML, B.Tech ECE, B.Tech Civil, B.Tech Mechanical, and BCA. Each program has its own minor-project year and major-project year (see `Program` model, section 4) — e.g. B.Tech: minor in year 3, major in year 4; BCA: minor in year 2, major in year 3.
+
+**Explicitly out of scope for v1** (see section 11 roadmap for when/whether these come later):
+- MCA and any other postgraduate program — different project shape (often solo/dissertation), needs different logic, not just config.
+- Any school other than SOEC (Pharmacy, Management, Architecture, Agriculture, etc.) — each needs its own matching/team-structure design, not a config change.
+- Idea deduplication alerts, real-time chat, calendar integration, notifications — all deferred, see section 11.
+
 ---
 
 ## 2. Roles
@@ -21,7 +30,7 @@ AI is used for ranking pool ideas by semantic similarity to a student's stated s
 | Role | Can do |
 |---|---|
 | **Public / Guest** | View Landing Page showcase, system status, and execute direct Single Sign-On (SSO) login into any portal. |
-| **Student** | Register/login. View idea pool with AI-ranked recommendations. Select a pool idea, OR propose own idea + request a specific faculty as mentor. Create/join a team (add teammates by name/email). Submit team for admin approval. Once approved: access team workspace (discussion, files, milestones, meetings). |
+| **Student** | Register/login with a `program` and `currentYear` (see section 4). Idea pool and recommendations are filtered to whichever project level (`minor`/`major`) their program+year makes them eligible for. Select a pool idea, OR propose own idea + request a specific faculty as mentor. Create/join a team (add teammates by name/email). Submit team for admin approval. Once approved: access team workspace (discussion, files, milestones, meetings). |
 | **Faculty** | Register/login. Submit/edit/delete project ideas into the pool. View and accept/reject incoming mentor requests for self-proposed ideas. Once mentoring a team: full access to that team's workspace, can set milestones and meeting times. |
 | **Admin** | View all ideas, all teams, all statuses. Approve or reject submitted teams. View unmatched students after the formation window closes and manually assign them to a team + idea + mentor. Open/close the team-formation window. |
 
@@ -60,6 +69,16 @@ unassigned_pool      — student never joined/submitted a team by window close; 
 ## 4. Data models (MongoDB / Mongoose)
 
 ```js
+// Program (new — seeded once via script, not user-editable; see section 12)
+{
+  _id,
+  code: String,          // "BTECH_CSE", "BCA" — unique
+  name: String,           // "B.Tech Computer Science & Engineering"
+  minorYear: Number,      // which year of this program is the minor-project year
+  majorYear: Number,      // which year is the major/capstone year
+  durationYears: Number   // 4 for B.Tech branches, 3 for BCA — display only
+}
+
 // User
 {
   _id,
@@ -67,6 +86,8 @@ unassigned_pool      — student never joined/submitted a team by window close; 
   email: String,
   passwordHash: String,
   role: { type: String, enum: ["student", "faculty", "admin"] },
+  program: ObjectId,             // ref Program — required if role === "student"
+  currentYear: Number,           // required if role === "student"
   skills: [String],
   interests: [String],
   profileVector: [Number],       // alias: profileEmbedding (generated when profile saved)
@@ -81,6 +102,7 @@ unassigned_pool      — student never joined/submitted a team by window close; 
   domainTags: [String],
   teamSizeMax: Number,
   capacity: Number,
+  targetLevel: { type: String, enum: ["minor", "major"] },  // which project tier this idea is for
   source: { type: String, enum: ["faculty_pool", "student_proposed"] },
   createdBy: ObjectId,          // ref User (faculty, or student if self-proposed)
   requestedMentor: ObjectId,    // ref User, faculty — only set if source = student_proposed
@@ -153,13 +175,16 @@ unassigned_pool      — student never joined/submitted a team by window close; 
 
 ```
 Auth
-POST   /api/auth/register              { name, email, password, role }
+POST   /api/auth/register              { name, email, password, role, program, currentYear }  — program/currentYear required if role="student"
 POST   /api/auth/login                 { email, password } → { token }
 GET    /api/auth/me                    { token } → user object
 
+Programs
+GET    /api/programs                   public — list all 6 seeded programs, for the registration dropdown
+
 Ideas / Projects
-POST   /api/projects                   faculty only — creates pool idea, triggers embedding
-POST   /api/projects/propose           student only — creates student_proposed idea, status=pending_mentor_review
+POST   /api/projects                   faculty only — { title, description, domainTags, teamSizeMax, capacity, targetLevel } creates pool idea, triggers embedding
+POST   /api/projects/propose           student only — creates student_proposed idea, status=pending_mentor_review, targetLevel inferred from the proposing student's current eligible level
 GET    /api/projects                   list (filterable by source/status)
 GET    /api/projects/recommended       student only — ranked pool ideas by cosine similarity
 PATCH  /api/projects/:id/mentor-decision   faculty only — { decision: "accept" | "reject" }
@@ -202,7 +227,16 @@ POST   /api/teams/:id/meetings          mentor only
 
 1. On `PUT /api/users/me/profile`, concatenate `skills.join(", ") + ". " + interests.join(", ")`, request vector embeddings from Gemini API (`text-embedding-004`), store result in `profileVector`.
 2. On `POST /api/projects` (and edit if description changes), embed `title + ". " + description`, store in `descriptionVector`.
-3. On `GET /api/projects/recommended`, fetch student's `profileVector` and active pool projects. Compute cosine similarity in plain JS:
+3. On `GET /api/projects/recommended`, first determine the student's eligible project level via their `program` + `currentYear`:
+
+```js
+function getStudentProjectLevel(user, program) {
+  if (user.currentYear === program.minorYear) return "minor";
+  if (user.currentYear === program.majorYear) return "major";
+  return null; // not currently in a project year — dashboard should show a "not yet" state, not an empty idea list
+}
+```
+Filter candidate projects to `targetLevel === eligibleLevel` before ranking — a 3rd-year B.Tech student should never see 4th-year major-capstone ideas or vice versa. Then fetch the student's `profileVector` and compute cosine similarity against the filtered set:
 
 ```js
 function cosineSimilarity(a, b) {
@@ -266,9 +300,9 @@ projectmatch/
 ├─ backend/
 │  ├─ node_modules/
 │  ├─ src/
-│  │  ├─ models/          # User.js, Project.js, Team.js, WorkspaceMessage.js, WorkspaceFile.js, Milestone.js, Meeting.js
-│  │  ├─ routes/          # authRoutes.js, projectRoutes.js, etc.
-│  │  ├─ controllers/     # authController.js, etc.
+│  │  ├─ models/          # User.js, Project.js, Team.js, WorkspaceMessage.js, WorkspaceFile.js, Milestone.js, Meeting.js, Program.js
+│  │  ├─ routes/          # authRoutes.js, projectRoutes.js, programRoutes.js, etc.
+│  │  ├─ controllers/     # authController.js, programController.js, etc.
 │  │  ├─ services/        # vectorService.js, matchingService.js
 │  │  ├─ middleware/      # auth.js, requireRole.js, cors.js
 │  │  └─ server.js        # Express application & status dashboard at GET /
@@ -315,3 +349,45 @@ npm run dev:admin     # http://localhost:5175
 # Or launch all 4 portals concurrently:
 npm run dev
 ```
+
+---
+
+## 11. Roadmap (v2+, not to be built now)
+
+v1 is the core loop working end-to-end for SOEC's 6 UG programs. Everything below is deliberately deferred — either cut for time or genuinely dependent on real usage data v1 hasn't produced yet. Do not build any of this until v1 is live and used for at least one real semester, unless explicitly told otherwise.
+
+**v2 — close v1's known gaps**
+- Idea deduplication alerts (reuses `descriptionVector`, pairwise cosine similarity across active projects, flag pairs above ~0.85)
+- Short-lived, one-time SSO handoff tokens (replacing the current full-session-token-in-URL approach — see `ssoHandoff.js` comment)
+- Email/in-app notifications (mentor decision, admin approval, window closing soon)
+- PWA/offline support on student/faculty/admin portals, if wanted — needs network-first caching for `/api/` routes specifically, not the same config as the landing page
+
+**v3 — real-time and richer workspace**
+- WebSocket-based live discussion thread (v1 uses polling, which is fine at current scale)
+- Calendar integration for meetings (Google Calendar OAuth sync)
+- Admin analytics dashboard (domain trends, mentor request volume) — needs a real semester of data first
+
+**v4 — expand who it serves**
+- MCA (postgrad) — different project shape, needs new logic, not just a `Program` row
+- Additional DBUU schools beyond SOEC — one at a time, each needs its own matching/team-structure design
+- Cross-year idea archive ("this was done 2 years ago") — needs a semester/year concept added to the data model
+
+**v5+ — only with real demand**
+- Native mobile app (PWA likely already covers this)
+- Multi-institution white-labeling
+- Originality/plagiarism checking on final reports (a different tool, not really "ProjectMatch")
+
+---
+
+## 12. Program seed data
+
+Run once via `backend/scripts/seedPrograms.js` after the `Program` model exists. Not user-editable in v1 — if a program's minor/major year ever needs to change, update this seed and re-run, don't build an admin UI for it yet.
+
+| code | name | minorYear | majorYear | durationYears |
+|---|---|---|---|---|
+| BTECH_CSE | B.Tech Computer Science & Engineering | 3 | 4 | 4 |
+| BTECH_AIML | B.Tech Artificial Intelligence & Machine Learning | 3 | 4 | 4 |
+| BTECH_ECE | B.Tech Electronics & Communication Engineering | 3 | 4 | 4 |
+| BTECH_CIVIL | B.Tech Civil Engineering | 3 | 4 | 4 |
+| BTECH_MECH | B.Tech Mechanical Engineering | 3 | 4 | 4 |
+| BCA | Bachelor of Computer Applications | 2 | 3 | 3 |

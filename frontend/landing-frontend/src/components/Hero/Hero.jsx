@@ -10,25 +10,25 @@ export default function Hero() {
       </svg>
       <div className="wrap hero-inner">
         <p className="eyebrow hero-eyebrow">
-          Dev Bhoomi Uttarakhand University &mdash; <strong>2nd, 3rd & 4th Year Project Management</strong>
+          Dev Bhoomi Uttarakhand University &mdash; <strong>School of Engineering & Computing (SOEC)</strong>
         </p>
         <h1 className="hero-title">
           Chart your Minor & Major capstone, <em>waypoint by waypoint.</em>
         </h1>
         <p className="hero-sub">
-          One central platform for 2nd-year Minor Projects, 3rd-year Advanced Projects, and 4th-year Major Capstones. Connect faculty project topics with student skills across SOEC, SOMC, SOPR, SOADP, SOAF, and SOBAS.
+          One central platform for B.Tech (Yr 3 Minor / Yr 4 Major) and BCA (Yr 2 Minor / Yr 3 Major) capstone cycles. Connect faculty pool ideas with student technical skills via Gemini 768-D AI vector matching.
         </p>
         <div className="hero-actions">
-          <a href="#portals" className="btn-primary">FIND YOUR PROJECT &rarr;</a>
-          <a href="#features" className="btn-text">How AI Vector Matching Works</a>
+          <a href="#portals" className="btn-primary">LAUNCH PORTAL SSO &rarr;</a>
+          <a href="#features" className="btn-text">How Gemini Matching Works</a>
         </div>
 
         <div className="waypoints">
           <div className="waypoint-row">
-            <div className="waypoint"><p className="wp-num">01</p><p className="wp-label">Pick Minor / Major Line</p></div>
+            <div className="waypoint"><p className="wp-num">01</p><p className="wp-label">Pick Minor / Major Idea</p></div>
             <div className="waypoint"><p className="wp-num">02</p><p className="wp-label">Rope in Teammates</p></div>
             <div className="waypoint"><p className="wp-num">03</p><p className="wp-label">Faculty Mentor Sign-Off</p></div>
-            <div className="waypoint"><p className="wp-num">04</p><p className="wp-label">Workspace Base Camp</p></div>
+            <div className="waypoint"><p className="wp-num">04</p><p className="wp-label">Team Workspace Base Camp</p></div>
           </div>
         </div>
       </div>

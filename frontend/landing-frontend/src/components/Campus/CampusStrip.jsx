@@ -4,7 +4,7 @@ export default function CampusStrip() {
   return (
     <>
       {/* DBUU CAMPUS & HERITAGE HIGHLIGHT STRIP */}
-      <section id="campus" style={{ background: 'var(--slate)', color: '#FFFFFF', padding: '64px 0' }}>
+      <section id="campus-stats" style={{ background: 'var(--slate)', color: '#FFFFFF', padding: '64px 0' }}>
         <div className="wrap">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '32px', textAlign: 'center' }}>
             <div>
@@ -36,7 +36,7 @@ export default function CampusStrip() {
           </div>
           <div className="stat">
             <p className="stat-num stat-count-target" data-count="6" data-suffix="" data-format="plain">0</p>
-            <p className="stat-label">Project-Bearing Schools</p>
+            <p className="stat-label">SOEC Capstone Programs</p>
           </div>
           <div className="stat">
             <p className="stat-num stat-count-target" data-count="1" data-suffix=":1" data-format="ratio">0</p>

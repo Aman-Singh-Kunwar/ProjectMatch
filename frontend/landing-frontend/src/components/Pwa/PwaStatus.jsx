@@ -4,20 +4,48 @@ export default function PwaStatus() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [waitingWorker, setWaitingWorker] = useState(null);
 
   useEffect(() => {
-    // Register Service Worker for PWA Offline Caching
+    // 1. PROD vs DEV Guard: Register SW only in production builds
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(
-          (reg) => {
-            console.log('ProjectMatch PWA ServiceWorker registered with scope:', reg.scope);
-          },
-          (err) => {
-            console.log('ProjectMatch PWA ServiceWorker registration failed:', err);
+      if (import.meta.env.PROD) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then(
+            (reg) => {
+              // 2. Lifecycle Update Detection
+              if (reg.waiting) {
+                setUpdateAvailable(true);
+                setWaitingWorker(reg.waiting);
+              }
+
+              reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                if (installingWorker) {
+                  installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      setUpdateAvailable(true);
+                      setWaitingWorker(installingWorker);
+                    }
+                  };
+                }
+              };
+            },
+            (err) => {
+              console.log('ProjectMatch PWA ServiceWorker registration failed:', err);
+            }
+          );
+        });
+      } else {
+        // In DEV mode: automatically unregister any active service workers
+        // to prevent cache staleness while running 'npm run dev'
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const registration of registrations) {
+            registration.unregister();
           }
-        );
-      });
+        });
+      }
     }
 
     // Monitor Network Online / Offline Status
@@ -56,8 +84,56 @@ export default function PwaStatus() {
     }
   };
 
+  const handleRefreshApp = () => {
+    if (waitingWorker) {
+      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    }
+    window.location.reload();
+  };
+
   return (
     <>
+      {/* UPDATE AVAILABLE BANNER */}
+      {updateAvailable && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'var(--pine)',
+            color: '#FFFFFF',
+            borderRadius: 'var(--radius)',
+            padding: '10px 20px',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12.5px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          <span>🚀 New DBUU ProjectMatch update available!</span>
+          <button
+            onClick={handleRefreshApp}
+            style={{
+              background: '#FFFFFF',
+              color: 'var(--pine)',
+              border: 'none',
+              borderRadius: '3px',
+              padding: '4px 10px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              fontWeight: '600',
+              cursor: 'pointer',
+            }}
+          >
+            Refresh Now
+          </button>
+        </div>
+      )}
+
       {/* OFFLINE STATUS NOTIFICATION BANNER */}
       {isOffline && (
         <div
@@ -86,7 +162,7 @@ export default function PwaStatus() {
       )}
 
       {/* PWA INSTALL PROMPT BAR */}
-      {showInstallBanner && !isOffline && (
+      {showInstallBanner && !isOffline && !updateAvailable && (
         <div
           style={{
             position: 'fixed',

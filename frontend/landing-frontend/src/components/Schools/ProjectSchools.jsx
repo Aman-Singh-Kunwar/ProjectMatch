@@ -1,36 +1,49 @@
 import React from 'react';
-import { DBUU_PROJECT_SCHOOLS } from '../../data/schoolsData';
+import { DBUU_SOEC_PROGRAMS } from '../../data/schoolsData';
 
 export default function ProjectSchools() {
   return (
-    <section id="schools" style={{ padding: '56px 0', background: 'var(--paper-2)' }}>
+    <section id="soec-programs" style={{ padding: '64px 0', background: 'var(--paper-2)' }}>
       <div className="wrap">
-        <div className="section-head" style={{ marginBottom: '32px' }}>
-          <p className="eyebrow">Project-Bearing DBUU Schools</p>
-          <h2 className="section-title">2nd, 3rd & 4th Year Minor/Major Project Schools</h2>
-          <p className="section-sub">Listed below are the DBUU Schools with mandatory 2nd-year Minor Projects, 3rd-year Interdisciplinary Projects, and 4th-year Major Capstone Dissertations.</p>
+        <div className="section-head" style={{ marginBottom: '36px' }}>
+          <p className="eyebrow">School of Engineering & Computing (SOEC)</p>
+          <h2 className="section-title">6 Supported Undergraduate Degree Programs</h2>
+          <p className="section-sub">
+            ProjectMatch v1 locks scope to SOEC's 6 undergraduate engineering & application branches. Minor & Major capstone selection is dynamically filtered by your program duration and current academic year.
+          </p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-          {DBUU_PROJECT_SCHOOLS.map((school) => (
-            <div
-              key={school.code}
-              className="school-card reveal"
-            >
+          {DBUU_SOEC_PROGRAMS.map((prog) => (
+            <div key={prog.code} className="school-card reveal">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '2rem' }}>{school.icon}</span>
+                <span style={{ fontSize: '2rem' }}>{prog.icon}</span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--pine)', fontWeight: '600', background: 'rgba(196, 18, 48, 0.08)', padding: '4px 10px', borderRadius: '3px' }}>
-                  {school.code}
+                  {prog.code}
                 </span>
               </div>
-              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '19px', fontWeight: '500', color: 'var(--ink)', marginBottom: '6px' }}>
-                {school.name}
+              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: '500', color: 'var(--ink)', marginBottom: '6px' }}>
+                {prog.name}
               </h4>
-              <p style={{ fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '10px', fontWeight: '500' }}>
-                {school.degrees}
+              <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginBottom: '12px', fontWeight: '500' }}>
+                {prog.duration}
               </p>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11.5px', color: 'var(--slate)', background: 'var(--paper-2)', padding: '6px 10px', borderRadius: '3px' }}>
-                🎯 {school.projects}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11.5px', color: 'var(--slate)', background: 'var(--paper-2)', padding: '5px 10px', borderRadius: '3px' }}>
+                  🎯 {prog.minorYear}
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '11.5px', color: 'var(--pine)', background: 'rgba(196, 18, 48, 0.06)', padding: '5px 10px', borderRadius: '3px' }}>
+                  🏆 {prog.majorYear}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {prog.domainTags.map((tag, idx) => (
+                  <span key={idx} style={{ fontSize: '10.5px', fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)', background: 'var(--paper-2)', padding: '2px 7px', borderRadius: '3px' }}>
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
           ))}
